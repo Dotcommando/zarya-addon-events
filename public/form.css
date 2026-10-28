@@ -1,0 +1,6 @@
+.participation-form { display: grid; gap: 16px; width: 100%; max-width: 640px; padding: 20px; border: 1px solid #cbd5e1; border-radius: 12px; background-color: #f8fafc; }
+.participation-form label { display: grid; gap: 6px; }
+.participation-form input, .participation-form select, .participation-form button { width: 100%; min-width: 0; padding: 10px; font: inherit; border: 1px solid #94a3b8; border-radius: 6px; background-color: #ffffff; color: #172033; }
+.participation-form h2 { margin: 0; font-size: 24px; }
+.participation-form [data-participation-status] { min-height: 64px; margin: 0; overflow-wrap: anywhere; }
+.participation-form :focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }

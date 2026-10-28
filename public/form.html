@@ -1,0 +1,13 @@
+[[SNIPPET_KEY? &pageIds=`[[+pageIds]]` &as=`booking`]]
+<form class="participation-form" data-participation-form data-participation-page="[[+booking.pageId]]" data-participation-language="[[*language]]">
+  <h2>Запись на событие / Event booking</h2>
+  <label>Игра / Game<select name="pageId" required>[[Each? &items=`[[+booking.games]]` &chunk=`OPTION_KEY` &as=`game`]]</select></label>
+  <label>Дата встречи / Session<select name="sessionId" required disabled><option value="">Выберите дату / Choose a date</option></select></label>
+  <button type="button" data-participation-refresh>Обновить даты / Refresh dates</button>
+  <label>Количество участников / Participants<input name="places" type="number" min="1" step="1" value="1" required></label>
+  <label>Ваше имя / Your name<input name="name" autocomplete="name" maxlength="200" required></label>
+  <label>Телефон / Phone<input name="phone" type="tel" autocomplete="tel" maxlength="64" required></label>
+  <label>Email<input name="email" type="email" autocomplete="email" maxlength="254" required></label>
+  <button type="submit" disabled>Отправить заявку / Request places</button>
+  <p data-participation-status role="status" aria-live="polite"></p>
+</form>

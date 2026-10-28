@@ -1,0 +1,132 @@
+{
+  "id": "0001-session-exclusions",
+  "collections": [
+    {
+      "name": "session_exclusions",
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "siteId",
+            "pageId",
+            "seriesId",
+            "ruleId",
+            "occurrenceNumber",
+            "startsAt",
+            "endsAt",
+            "timeZone",
+            "capacity",
+            "heldPlaces",
+            "confirmedPlaces",
+            "status",
+            "overridden",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "minLength": 1
+            },
+            "siteId": {
+              "bsonType": "string",
+              "minLength": 1
+            },
+            "pageId": {
+              "bsonType": "string",
+              "minLength": 1
+            },
+            "seriesId": {
+              "bsonType": [
+                "string",
+                "null"
+              ]
+            },
+            "ruleId": {
+              "bsonType": [
+                "string",
+                "null"
+              ]
+            },
+            "occurrenceNumber": {
+              "bsonType": [
+                "int",
+                "long",
+                "double",
+                "null"
+              ],
+              "minimum": 0,
+              "multipleOf": 1
+            },
+            "startsAt": {
+              "bsonType": "date"
+            },
+            "endsAt": {
+              "bsonType": "date"
+            },
+            "timeZone": {
+              "bsonType": "string",
+              "minLength": 1
+            },
+            "capacity": {
+              "bsonType": [
+                "int",
+                "long",
+                "double",
+                "decimal"
+              ],
+              "minimum": 1,
+              "multipleOf": 1
+            },
+            "heldPlaces": {
+              "bsonType": [
+                "int",
+                "long",
+                "double",
+                "decimal"
+              ],
+              "minimum": 0,
+              "multipleOf": 1
+            },
+            "confirmedPlaces": {
+              "bsonType": [
+                "int",
+                "long",
+                "double",
+                "decimal"
+              ],
+              "minimum": 0,
+              "multipleOf": 1
+            },
+            "status": {
+              "enum": [
+                "Scheduled",
+                "Cancelled"
+              ]
+            },
+            "overridden": {
+              "bsonType": "bool"
+            },
+            "version": {
+              "bsonType": "string",
+              "minLength": 1
+            }
+          }
+        }
+      },
+      "indexes": [
+        {
+          "name": "session_exclusions_occurrence_unique",
+          "key": {
+            "siteId": 1,
+            "seriesId": 1,
+            "ruleId": 1,
+            "occurrenceNumber": 1
+          },
+          "unique": true
+        }
+      ]
+    }
+  ]
+}
