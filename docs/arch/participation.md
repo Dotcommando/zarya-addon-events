@@ -78,3 +78,20 @@ Verification uses deterministic fake ports, technical adapter doubles, an inward
 import audit and the host's isolated MongoDB/browser integration tests. No tests
 send notifications or invoke paid services. The owner starts the application from
 the IDE; test servers close after verification.
+
+## Events administration (ADR 0002)
+
+The package exposes EventsAdmin through ./admin. The host contract is version
+0.2.0. ListSessionSeries returns all authorized same-site series in identity order,
+including ended/retained series; it has no calendar horizon or silent truncation.
+The host REST GET /api/admin/sites/:siteId/session-series uses the current session
+actor and rejects query parameters. Domain/application code stays in this package;
+NestJS and REST composition stay with the site installation.
+
+The UI's schedule input is converted to UTC once. Display is always in the CMS
+site zone, and changing that setting does not touch series, sessions or bookings.
+The historical zone fields remain compatibility metadata; no event-zone editor is
+exposed. Calendar/day/occurrence/schedule/settings use validated query state under
+the registered add-on route. Requests are paged explicitly, and calendar event
+pages are fully consumed before showing a complete grid. Old data and uncertain
+mutations are never silently retried or replaced with empty success screens.

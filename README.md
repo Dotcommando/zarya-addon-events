@@ -1,18 +1,18 @@
 # Zarya Participation
 
 Optional recurring events and participation requests for CMS Zarya. This is a
-library installed as @zarya/participation@0.1.0 in the shared backend and admin
+library installed as @zarya/events@0.2.0 in the shared backend and admin
 build, not a separate application. Game content remains ordinary CMS pages.
 
 The source follows layer-first Hexagonal Architecture. Host services are explicit
-ports; @zarya/addon-contracts@0.1.0 is the only inward external contract. No source
+ports; @zarya/addon-contracts@0.2.0 is the only inward external contract. No source
 imports or runtime symlinks point into a CMS checkout.
 
 ## Development
 
 Node 26.7.0 and npm 11.19.0 are pinned. All library/tooling versions are exact.
 The unpublished contract SDK is included as the versioned tarball
-vendor/zarya-addon-contracts-0.1.0.tgz, with integrity in package-lock.json.
+vendor/zarya-addon-contracts-0.2.0.tgz, with integrity in package-lock.json.
 
 ```sh
 npm ci

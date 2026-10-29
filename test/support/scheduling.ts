@@ -56,6 +56,7 @@ export function scheduleFixture(): IScheduleFixture {
     resolve: (_p, date) => ({ startsAt: new Date(date + 'T10:00:00Z'), endsAt: new Date(date + 'T11:00:00Z') }),
   };
   const store: ISessionScheduleStorePort = {
+    listSeries: async (siteId) => structuredClone(series.filter((item) => item.siteId === siteId)),
     findOccurrences: async (siteId, seriesId, keys) => structuredClone(sessions.filter((s) => s.siteId === siteId
       && s.seriesId === seriesId
       && keys.some((k) => k.ruleId === s.ruleId && k.occurrenceNumber === s.occurrenceNumber))),

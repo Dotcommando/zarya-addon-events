@@ -4,6 +4,7 @@ import type { ISessionState } from '../../../domain/participation/session.js';
 import type { ISessionSeriesState, ISessionWrite } from '../../../domain/participation/session-series.js';
 
 export interface ISessionScheduleStorePort {
+  listSeries(siteId: string): Promise<readonly ISessionSeriesState[]>;
   findSeries(siteId: string, seriesId: string): Promise<ISessionSeriesState | null>;
   findSessions(siteId: string, seriesId: string, from?: Date): Promise<readonly ISessionState[]>;
   findOccurrences(siteId: string, seriesId: string,

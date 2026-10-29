@@ -1,4 +1,4 @@
-# Zarya Participation Add-on Instructions
+# Zarya Events Add-on Instructions
 
 This repository owns the optional event scheduling and participation capability
 for CMS Zarya. Follow the same architecture, strict typing, formatting, dependency
@@ -31,9 +31,10 @@ page. Disabling retains data and authorized handling of existing records.
 ## Business invariants
 
 Store instants as UTC and display/evaluate calendars in explicit IANA zones.
-Date-only values remain calendar dates. Preserve local recurrence time across
-DST: gaps shift forward; overlaps select the later instant; duration is elapsed
-minutes. Generate a bounded rolling one-year horizon, not an infinite series.
+Date-only values remain calendar dates. The CMS supplies the site time zone for
+display and local input. New administration schedules use fixed UTC recurrence;
+changing the CMS zone never shifts stored meetings or rewrites recurring rules.
+Explicit schedule edits apply the existing series scope. Duration is elapsed minutes. Generate a bounded rolling one-year horizon, not an infinite series.
 Preserve occurrence identities/exceptions across regeneration and scoped edits.
 
 Reserve all requested places atomically or none. Pending requests hold places

@@ -55,6 +55,18 @@ export class MongooseSessionScheduleStore implements ISessionScheduleStorePort {
     this.sessions = sessionModel(connection);
   }
 
+  async listSeries(siteId: string): Promise<readonly ISessionSeriesState[]> {
+    const records = await this.series.find({ siteId }).sort({ _id: 1 }).lean().exec();
+
+    return records.map(({ _id, ...state }) => {
+      const result = { ...state, seriesId: _id };
+
+      validateSeries(result);
+
+      return result;
+    });
+  }
+
   async findSeries(siteId: string, seriesId: string): Promise<ISessionSeriesState | null> {
     const record = await this.series.findOne({ _id: seriesId, siteId }).lean().exec();
 

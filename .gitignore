@@ -1,5 +1,12 @@
 node_modules/
 dist/
-.tmp/
-.env
 coverage/
+artifacts/
+data/
+.tmp/
+.idea/
+*.tsbuildinfo
+*.log
+.env
+.env.*
+!.env.example

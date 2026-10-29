@@ -1,3 +1,7 @@
+import type { IAddonAdminHost } from '@zarya/addon-contracts/addons';
+
+import type { IUtcPattern } from './calendar';
+
 export interface IEvent {
   readonly sessionId: string;
   readonly pageId: string;
@@ -18,7 +22,9 @@ export interface IRequest {
   readonly version: string;
   readonly places: number;
   readonly state: string;
-  readonly contact: { readonly name: string; readonly email: string; readonly phone: string };
+  readonly contact: { readonly name: string;
+    readonly email: string;
+    readonly phone: string };
 }
 
 export function record(value: unknown): Record<string, unknown> {
@@ -78,7 +84,8 @@ export function requestRow(value: unknown): IRequest {
 }
 
 export function page<T>(value: unknown, parse: (item: unknown) => T): {
-  items: readonly T[]; nextCursor: string | null;
+  items: readonly T[];
+  nextCursor: string | null;
 } {
   const row = record(value);
 
@@ -87,4 +94,84 @@ export function page<T>(value: unknown, parse: (item: unknown) => T): {
   }
 
   return { items: row.items.map(parse), nextCursor: row.nextCursor === null ? null : text(row.nextCursor) };
+}
+
+export interface ISeries {
+  seriesId: string;
+  siteId: string;
+  pageId: string;
+  version: string;
+  generatedThrough: string;
+  rules: readonly { pattern: IUtcPattern;
+    capacity: number;
+    count: number | null }[];
+}
+
+export function series(value: unknown): ISeries {
+  const row = record(value);
+
+  if (!Array.isArray(row.rules) || !row.rules.length) {
+    throw new Error('Invalid schedule');
+  }
+
+  return {
+    seriesId: text(row.seriesId),
+    siteId: text(row.siteId),
+    pageId: text(row.pageId),
+    version: text(row.version),
+    generatedThrough: text(row.generatedThrough),
+    rules: row.rules.map((value: unknown) => {
+      const rule = record(value);
+      const pattern = record(rule.pattern);
+
+      if (!Array.isArray(pattern.weekdays)) {
+        throw new Error('Invalid weekdays');
+      }
+
+      return {
+        capacity: count(rule.capacity),
+        count: rule.count === null ? null : count(rule.count),
+        pattern: {
+          startsOn: text(pattern.startsOn),
+          endsOn: pattern.endsOn === null ? null : text(pattern.endsOn),
+          localTime: text(pattern.localTime),
+          timeZone: text(pattern.timeZone),
+          everyWeeks: count(pattern.everyWeeks),
+          durationMinutes: count(pattern.durationMinutes),
+          weekdays: pattern.weekdays.map(count),
+        },
+      };
+    }),
+  };
+}
+
+export async function allEvents(host: IAddonAdminHost, rangeStart: string, rangeEnd: string,
+  pageId?: string): Promise<readonly IEvent[]> {
+  const result: IEvent[] = [];
+  const seen = new Set<string>();
+  let cursor: string | null = null;
+
+  do {
+    const query: URLSearchParams = new URLSearchParams({
+      rangeStart,
+      rangeEnd,
+      limit: '100',
+      ...(pageId ? { pageId } : {}),
+      ...(cursor ? { cursor } : {}),
+    });
+    const batch: { items: readonly IEvent[];
+      nextCursor: string | null } = page(await host.request('/sessions?' + query), event);
+
+    result.push(...batch.items);
+    cursor = batch.nextCursor;
+
+    if (cursor && seen.has(cursor)) {
+      throw new Error('Repeated pagination cursor');
+    }
+    if (cursor) {
+      seen.add(cursor);
+    }
+  } while (cursor);
+
+  return result;
 }
