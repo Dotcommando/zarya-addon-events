@@ -1,12 +1,13 @@
 # Zarya Participation
 
 Optional recurring events and participation requests for CMS Zarya. This is a
-library installed as @zarya/events@0.3.3 in the shared backend and admin
+library installed as @zarya/events@0.3.5 in the shared backend and admin
 build, not a separate application. Game content remains ordinary CMS pages.
 
-Packages 0.3.1–0.3.3 update calendar presentation only. The last loaded calendar
+Packages 0.3.1–0.3.5 update calendar presentation only. The last loaded calendar
 stays under a transparent interaction blocker with a visible progress indicator
 until the next month is ready.
+Today, past/future weekdays and past/future weekends use distinct CMS palette tones.
 The server implementation remains 0.3.0; configuration and schemas are unchanged.
 Existing events and requests do not need migration. Runtime artifacts remain immutable.
 

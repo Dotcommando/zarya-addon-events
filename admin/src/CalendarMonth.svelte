@@ -77,14 +77,19 @@
 </div>
 <p class="_calendar-zone">{timeZone}</p>
 <div class="month-grid" aria-label={ru ? 'Календарь событий' : 'Events calendar'} aria-busy={busy}>
-  {#each weekdays as weekday (weekday)}<div class="_calendar-weekday">{weekday}</div>{/each}
+  {#each weekdays as weekday, index (weekday)}
+    <div class="_calendar-weekday" class:_calendar-weekday__weekend={index >= 5}>{weekday}</div>
+  {/each}
   {#each cells as date (date)}
     {@const dayEvents = events.filter((item) => localDate(item.startsAt, timeZone) === date)}
-    <div class="_calendar-cell" class:_calendar-cell__outside={!date.startsWith(month)}
-      class:_calendar-cell__past={date < today}
+    {@const isPast = Temporal.PlainDate.compare(date, today) < 0}
+    {@const isWeekend = Temporal.PlainDate.from(date).dayOfWeek >= 6}
+    <div class="_calendar-cell" class:_calendar-cell__weekend={isWeekend}
+      class:_calendar-cell__past={isPast}
+      class:_calendar-cell__interactive={!busy && (!isPast || dayEvents.length > 0)}
       class:_calendar-cell__today={date === today}>
       <button class="_calendar-day" aria-label={dayLabel(date) + ' · ' + dayEvents.length}
-        aria-current={date === today ? 'date' : undefined} disabled={busy || date < today && !dayEvents.length}
+        aria-current={date === today ? 'date' : undefined} disabled={busy || isPast && !dayEvents.length}
         onclick={() => onDay(date)}>
         <span>{Number(date.slice(-2))}</span>
         {#if dayEvents.length}<span class="_calendar-count">{dayEvents.length}</span>{/if}
@@ -145,20 +150,42 @@
 
   }
   ._calendar-cell {
+    --calendar-surface: var(--cms-surface);
+    --calendar-hover: color-mix(in srgb, var(--cms-accent) 8%, var(--cms-surface));
     position: relative;
     min-width: 0;
     min-height: 68px;
     border-right: 1px solid var(--cms-border);
     border-bottom: 1px solid var(--cms-border);
-    background: var(--cms-surface);
+    background: var(--calendar-surface);
 
   }
-  ._calendar-cell__outside { background: var(--cms-row); }
-  ._calendar-cell__outside ._calendar-day { color: var(--cms-muted); }
-  ._calendar-cell__past { background: var(--cms-row); }
-  ._calendar-cell__past ._calendar-day { color: var(--cms-muted); }
+  ._calendar-weekday__weekend {
+    background: color-mix(in srgb, var(--cms-accent) 7%, var(--cms-row));
+    color: var(--cms-accent);
+    font-weight: 600;
+  }
+  ._calendar-cell__weekend {
+    --calendar-surface: color-mix(in srgb, var(--cms-accent) 6%, var(--cms-row));
+    --calendar-hover: color-mix(in srgb, var(--cms-accent) 13%, var(--cms-row));
+  }
+  ._calendar-cell__weekend ._calendar-day { color: var(--cms-accent); }
+  ._calendar-cell__past {
+    --calendar-surface: color-mix(in srgb, var(--cms-muted) 16%, var(--cms-surface));
+    --calendar-hover: color-mix(in srgb, var(--cms-muted) 24%, var(--cms-surface));
+  }
+  ._calendar-cell__past._calendar-cell__weekend {
+    --calendar-surface: color-mix(in srgb, var(--cms-muted) 21%, var(--cms-row-hover));
+    --calendar-hover: color-mix(in srgb, var(--cms-muted) 30%, var(--cms-row-hover));
+  }
+  ._calendar-cell__today {
+    --calendar-surface: color-mix(in srgb, var(--cms-accent) 15%, var(--cms-surface));
+    --calendar-hover: color-mix(in srgb, var(--cms-accent) 24%, var(--cms-surface));
+  }
+  ._calendar-cell__interactive:hover { background: var(--calendar-hover); }
+  ._calendar-cell__past ._calendar-day { color: color-mix(in srgb, var(--cms-ink) 70%, var(--cms-muted)); }
   ._calendar-cell__past ._calendar-day:disabled { cursor: default; opacity: 1; }
-  ._calendar-day:hover:not(:disabled) { background: var(--cms-row-hover); }
+  ._calendar-day:hover:not(:disabled) { background: var(--calendar-hover); }
   ._calendar-day {
     display: flex;
     flex-direction: column;
@@ -184,6 +211,9 @@
 
   }
   ._calendar-day[aria-current="date"] > span:first-child { background: var(--cms-accent); color: #fff; }
+  ._calendar-day[aria-current="date"] {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cms-accent) 35%, transparent);
+  }
   ._calendar-count {
     display: grid;
     place-items: center;

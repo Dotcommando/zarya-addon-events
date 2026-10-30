@@ -26,6 +26,12 @@ Today/future dates and all enabled calendar controls use shared CMS hover feedba
 Previous/next month buttons use arrow icons on either side of Today, with translated
 accessible names. Disabled controls retain their disabled state on hover.
 
+The calendar derives five surface/hover pairs from the shared CMS palette: today,
+past weekdays, past weekends, future weekdays and future weekends. Saturday/Sunday
+headers are accented too. Date state uses the site's current date, independently
+of the displayed month, so spillover days keep their true past/future tone.
+Only selectable cells react to hover; empty past dates remain muted and disabled.
+
 Month navigation retains the last successfully loaded calendar, including its
 month, time zone and events. A transparent overlay and centered progress indicator
 block calendar controls during loading. Only the latest successful response swaps
