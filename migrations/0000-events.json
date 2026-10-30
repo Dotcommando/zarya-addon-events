@@ -1,0 +1,749 @@
+{
+  "id": "0000-events",
+  "collections": [
+    {
+      "name": "session_series",
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "siteId",
+            "pageId",
+            "rules",
+            "generatedThrough",
+            "nextExpansionAt",
+            "version",
+            "createdAt",
+            "updatedAt"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "minLength": 1
+            },
+            "siteId": {
+              "bsonType": "string",
+              "minLength": 1
+            },
+            "pageId": {
+              "bsonType": "string",
+              "minLength": 1
+            },
+            "rules": {
+              "bsonType": "array",
+              "minItems": 1,
+              "items": {
+                "bsonType": "object",
+                "required": [
+                  "ruleId",
+                  "pattern",
+                  "capacity",
+                  "count"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "ruleId": {
+                    "bsonType": "string",
+                    "minLength": 1
+                  },
+                  "pattern": {
+                    "bsonType": "object",
+                    "required": [
+                      "startsOn",
+                      "endsOn",
+                      "everyWeeks",
+                      "weekdays",
+                      "localTime",
+                      "timeZone",
+                      "durationMinutes"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "startsOn": {
+                        "bsonType": "string",
+                        "minLength": 1
+                      },
+                      "endsOn": {
+                        "bsonType": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "everyWeeks": {
+                        "bsonType": [
+                          "int",
+                          "long",
+                          "double",
+                          "decimal"
+                        ],
+                        "minimum": 1,
+                        "multipleOf": 1
+                      },
+                      "weekdays": {
+                        "bsonType": "array",
+                        "minItems": 1,
+                        "maxItems": 7,
+                        "uniqueItems": true,
+                        "items": {
+                          "bsonType": [
+                            "int",
+                            "long",
+                            "double",
+                            "decimal"
+                          ],
+                          "minimum": 1,
+                          "multipleOf": 1,
+                          "maximum": 7
+                        }
+                      },
+                      "localTime": {
+                        "bsonType": "string",
+                        "minLength": 1
+                      },
+                      "timeZone": {
+                        "bsonType": "string",
+                        "minLength": 1
+                      },
+                      "durationMinutes": {
+                        "bsonType": [
+                          "int",
+                          "long",
+                          "double",
+                          "decimal"
+                        ],
+                        "minimum": 1,
+                        "multipleOf": 1
+                      }
+                    }
+                  },
+                  "capacity": {
+                    "bsonType": [
+                      "int",
+                      "long",
+                      "double",
+                      "decimal"
+                    ],
+                    "minimum": 1,
+                    "multipleOf": 1
+                  },
+                  "count": {
+                    "bsonType": [
+                      "int",
+                      "long",
+                      "double",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "multipleOf": 1
+                  }
+                }
+              }
+            },
+            "generatedThrough": {
+              "bsonType": "string",
+              "minLength": 1
+            },
+            "nextExpansionAt": {
+              "bsonType": "date"
+            },
+            "version": {
+              "bsonType": "string",
+              "minLength": 1
+            },
+            "createdAt": {
+              "bsonType": "date"
+            },
+            "updatedAt": {
+              "bsonType": "date"
+            }
+          }
+        }
+      },
+      "indexes": [
+        {
+          "key": {
+            "siteId": 1,
+            "_id": 1
+          },
+          "name": "session_series_owned_unique",
+          "unique": true
+        },
+        {
+          "key": {
+            "nextExpansionAt": 1,
+            "_id": 1
+          },
+          "name": "session_series_expansion_due",
+          "unique": false
+        }
+      ]
+    },
+    {
+      "name": "sessions",
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "siteId",
+            "pageId",
+            "seriesId",
+            "ruleId",
+            "occurrenceNumber",
+            "startsAt",
+            "endsAt",
+            "timeZone",
+            "capacity",
+            "heldPlaces",
+            "confirmedPlaces",
+            "status",
+            "overridden",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "minLength": 1
+            },
+            "siteId": {
+              "bsonType": "string",
+              "minLength": 1
+            },
+            "pageId": {
+              "bsonType": "string",
+              "minLength": 1
+            },
+            "seriesId": {
+              "bsonType": [
+                "string",
+                "null"
+              ]
+            },
+            "ruleId": {
+              "bsonType": [
+                "string",
+                "null"
+              ]
+            },
+            "occurrenceNumber": {
+              "bsonType": [
+                "int",
+                "long",
+                "double",
+                "null"
+              ],
+              "minimum": 0,
+              "multipleOf": 1
+            },
+            "startsAt": {
+              "bsonType": "date"
+            },
+            "endsAt": {
+              "bsonType": "date"
+            },
+            "timeZone": {
+              "bsonType": "string",
+              "minLength": 1
+            },
+            "capacity": {
+              "bsonType": [
+                "int",
+                "long",
+                "double",
+                "decimal"
+              ],
+              "minimum": 1,
+              "multipleOf": 1
+            },
+            "heldPlaces": {
+              "bsonType": [
+                "int",
+                "long",
+                "double",
+                "decimal"
+              ],
+              "minimum": 0,
+              "multipleOf": 1
+            },
+            "confirmedPlaces": {
+              "bsonType": [
+                "int",
+                "long",
+                "double",
+                "decimal"
+              ],
+              "minimum": 0,
+              "multipleOf": 1
+            },
+            "status": {
+              "enum": [
+                "Scheduled",
+                "Cancelled"
+              ]
+            },
+            "overridden": {
+              "bsonType": "bool"
+            },
+            "version": {
+              "bsonType": "string",
+              "minLength": 1
+            }
+          }
+        }
+      },
+      "indexes": [
+        {
+          "key": {
+            "siteId": 1,
+            "seriesId": 1,
+            "ruleId": 1,
+            "occurrenceNumber": 1
+          },
+          "name": "sessions_occurrence_unique",
+          "unique": true,
+          "partialFilterExpression": {
+            "ruleId": {
+              "$type": "string"
+            }
+          }
+        },
+        {
+          "key": {
+            "siteId": 1,
+            "seriesId": 1,
+            "startsAt": 1,
+            "_id": 1
+          },
+          "name": "sessions_future_owned",
+          "unique": false
+        },
+        {
+          "name": "sessions_admin_calendar",
+          "key": {
+            "siteId": 1,
+            "startsAt": 1,
+            "_id": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "sessions_page_calendar",
+          "key": {
+            "siteId": 1,
+            "pageId": 1,
+            "status": 1,
+            "startsAt": 1,
+            "_id": 1
+          },
+          "unique": false
+        }
+      ]
+    },
+    {
+      "name": "participation_requests",
+      "validator": {
+        "$and": [
+          {
+            "$jsonSchema": {
+              "bsonType": "object",
+              "additionalProperties": false,
+              "required": [
+                "_id",
+                "siteId",
+                "sessionId",
+                "requestReference",
+                "places",
+                "contact",
+                "state",
+                "requestedAt",
+                "decidedAt",
+                "decidedBy",
+                "version"
+              ],
+              "properties": {
+                "_id": {
+                  "bsonType": "string",
+                  "minLength": 1
+                },
+                "siteId": {
+                  "bsonType": "string",
+                  "minLength": 1
+                },
+                "sessionId": {
+                  "bsonType": "string",
+                  "minLength": 1
+                },
+                "requestReference": {
+                  "bsonType": "string",
+                  "minLength": 1
+                },
+                "places": {
+                  "bsonType": [
+                    "int",
+                    "double"
+                  ],
+                  "minimum": 1,
+                  "maximum": 9007199254740991,
+                  "multipleOf": 1
+                },
+                "contact": {
+                  "bsonType": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "name",
+                    "phone",
+                    "email"
+                  ],
+                  "properties": {
+                    "name": {
+                      "bsonType": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    },
+                    "phone": {
+                      "bsonType": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "email": {
+                      "bsonType": "string",
+                      "minLength": 1,
+                      "maxLength": 254
+                    }
+                  }
+                },
+                "state": {
+                  "enum": [
+                    "Pending",
+                    "Confirmed",
+                    "Declined"
+                  ]
+                },
+                "requestedAt": {
+                  "bsonType": "date"
+                },
+                "decidedAt": {
+                  "bsonType": [
+                    "date",
+                    "null"
+                  ]
+                },
+                "decidedBy": {
+                  "bsonType": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "version": {
+                  "bsonType": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          {
+            "$or": [
+              {
+                "state": "Pending",
+                "decidedAt": null,
+                "decidedBy": null
+              },
+              {
+                "state": {
+                  "$in": [
+                    "Confirmed",
+                    "Declined"
+                  ]
+                },
+                "decidedAt": {
+                  "$type": "date"
+                },
+                "decidedBy": {
+                  "$type": "string"
+                },
+                "$expr": {
+                  "$gte": [
+                    "$decidedAt",
+                    "$requestedAt"
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "indexes": [
+        {
+          "name": "participation_request_reference_unique",
+          "key": {
+            "siteId": 1,
+            "requestReference": 1
+          },
+          "unique": true
+        },
+        {
+          "name": "participation_requests_session_time",
+          "key": {
+            "siteId": 1,
+            "sessionId": 1,
+            "requestedAt": 1,
+            "_id": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "participation_requests_session_state_time",
+          "key": {
+            "siteId": 1,
+            "sessionId": 1,
+            "state": 1,
+            "requestedAt": 1,
+            "_id": 1
+          },
+          "unique": false
+        }
+      ]
+    },
+    {
+      "name": "participation_operations",
+      "validator": {
+        "$and": [
+          {
+            "$jsonSchema": {
+              "bsonType": "object",
+              "additionalProperties": false,
+              "required": [
+                "_id",
+                "siteId",
+                "operation",
+                "actorId",
+                "keyDigest",
+                "inputIdentity",
+                "result",
+                "createdAt"
+              ],
+              "properties": {
+                "_id": {
+                  "bsonType": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "siteId": {
+                  "bsonType": "string",
+                  "minLength": 1
+                },
+                "operation": {
+                  "enum": [
+                    "Request",
+                    "Confirm",
+                    "Decline"
+                  ]
+                },
+                "actorId": {
+                  "bsonType": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "keyDigest": {
+                  "bsonType": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "inputIdentity": {
+                  "bsonType": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "result": {
+                  "oneOf": [
+                    {
+                      "bsonType": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "requestReference",
+                        "sessionId",
+                        "places",
+                        "state",
+                        "acceptedAt"
+                      ],
+                      "properties": {
+                        "requestReference": {
+                          "bsonType": "string",
+                          "minLength": 1
+                        },
+                        "sessionId": {
+                          "bsonType": "string",
+                          "minLength": 1
+                        },
+                        "places": {
+                          "bsonType": [
+                            "int",
+                            "double"
+                          ],
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                          "multipleOf": 1
+                        },
+                        "state": {
+                          "enum": [
+                            "Pending"
+                          ]
+                        },
+                        "acceptedAt": {
+                          "bsonType": "date"
+                        }
+                      }
+                    },
+                    {
+                      "bsonType": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "requestId",
+                        "sessionId",
+                        "places",
+                        "requestVersion",
+                        "decidedAt",
+                        "state"
+                      ],
+                      "properties": {
+                        "requestId": {
+                          "bsonType": "string",
+                          "minLength": 1
+                        },
+                        "sessionId": {
+                          "bsonType": "string",
+                          "minLength": 1
+                        },
+                        "places": {
+                          "bsonType": [
+                            "int",
+                            "double"
+                          ],
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                          "multipleOf": 1
+                        },
+                        "requestVersion": {
+                          "bsonType": "string",
+                          "minLength": 1
+                        },
+                        "decidedAt": {
+                          "bsonType": "date"
+                        },
+                        "state": {
+                          "enum": [
+                            "Confirmed"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "bsonType": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "requestId",
+                        "sessionId",
+                        "places",
+                        "requestVersion",
+                        "decidedAt",
+                        "state"
+                      ],
+                      "properties": {
+                        "requestId": {
+                          "bsonType": "string",
+                          "minLength": 1
+                        },
+                        "sessionId": {
+                          "bsonType": "string",
+                          "minLength": 1
+                        },
+                        "places": {
+                          "bsonType": [
+                            "int",
+                            "double"
+                          ],
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                          "multipleOf": 1
+                        },
+                        "requestVersion": {
+                          "bsonType": "string",
+                          "minLength": 1
+                        },
+                        "decidedAt": {
+                          "bsonType": "date"
+                        },
+                        "state": {
+                          "enum": [
+                            "Declined"
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                },
+                "createdAt": {
+                  "bsonType": "date"
+                }
+              }
+            }
+          },
+          {
+            "$or": [
+              {
+                "operation": "Request",
+                "actorId": null,
+                "result.state": "Pending",
+                "$expr": {
+                  "$eq": [
+                    "$createdAt",
+                    "$result.acceptedAt"
+                  ]
+                }
+              },
+              {
+                "operation": "Confirm",
+                "actorId": {
+                  "$type": "string"
+                },
+                "result.state": "Confirmed",
+                "$expr": {
+                  "$eq": [
+                    "$createdAt",
+                    "$result.decidedAt"
+                  ]
+                }
+              },
+              {
+                "operation": "Decline",
+                "actorId": {
+                  "$type": "string"
+                },
+                "result.state": "Declined",
+                "$expr": {
+                  "$eq": [
+                    "$createdAt",
+                    "$result.decidedAt"
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "indexes": [
+        {
+          "name": "participation_operations_scope_unique",
+          "key": {
+            "siteId": 1,
+            "operation": 1,
+            "actorId": 1,
+            "keyDigest": 1
+          },
+          "unique": true
+        }
+      ]
+    }
+  ]
+}

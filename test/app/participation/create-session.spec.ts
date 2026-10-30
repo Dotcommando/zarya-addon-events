@@ -2,13 +2,26 @@ import { vi } from 'vitest';
 
 import { CreateSessionUseCase } from '../../../src/app/use-cases/participation/create-session.use-case.js';
 import { addonPolicy } from '../../support/addons.js';
+import { fakeHookSource } from '../../support/hook-source.js';
 import { oneOffInput, sessionFixture } from '../../support/session-catalog.js';
 
 describe('CreateSession', () => {
+  it('does not create a meeting when its own extension check denies the action', async () => {
+    const f = sessionFixture();
+    const hooks = {
+      prepare: vi.fn(async () => {
+        throw new Error('Own hook denied');
+      }),
+    };
+    const operation = new CreateSessionUseCase(f.store, f.pages, f.access, f.values, addonPolicy(), hooks);
+
+    await expect(operation.execute(oneOffInput)).rejects.toThrow('Own hook denied');
+    expect(f.store.create).not.toHaveBeenCalled();
+  });
   it('creates an owned one-off meeting with no occupied places and permits past and overlapping meetings', async () => {
     const f = sessionFixture();
     const create = new CreateSessionUseCase(f.store, f.pages, f.access, f.values,
-      addonPolicy());
+      addonPolicy(), fakeHookSource);
     const input = {
       ...oneOffInput, startsAt: new Date('2026-01-01T10:00:00Z'), endsAt: new Date('2026-01-01T11:00:00Z'),
     };
@@ -30,7 +43,7 @@ describe('CreateSession', () => {
   it('rejects unauthorized, foreign page and invalid interval/capacity/timezone without writes', async () => {
     const f = sessionFixture();
     const create = new CreateSessionUseCase(f.store, f.pages, f.access, f.values,
-      addonPolicy());
+      addonPolicy(), fakeHookSource);
 
     await expect(create.execute({ ...oneOffInput, actorId: 'untrusted' })).rejects.toMatchObject({ code: 'Forbidden' });
     await expect(create.execute({ ...oneOffInput, pageId: 'foreign' })).rejects.toMatchObject({ code: 'NotFound' });

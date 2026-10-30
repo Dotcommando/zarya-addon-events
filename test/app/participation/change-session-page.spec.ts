@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 import { ChangeSessionPageUseCase } from '../../../src/app/use-cases/participation/change-session-page.use-case.js';
 import { SessionStatus } from '../../../src/domain/participation/session.js';
 import { addonPolicy } from '../../support/addons.js';
+import { fakeHookSource } from '../../support/hook-source.js';
 import { sessionFixture, sessionState } from '../../support/session-catalog.js';
 
 describe('ChangeSessionPage', () => {
@@ -30,7 +31,7 @@ describe('ChangeSessionPage', () => {
 
       f.states.set('session-1', original);
       const operation = new ChangeSessionPageUseCase(f.store, f.pages, f.access, f.values,
-        addonPolicy());
+        addonPolicy(), fakeHookSource);
       const result = await operation.execute(input);
 
       expect(f.states.get('session-1')).toEqual({ ...original, pageId: 'page-1', version: result.version });
@@ -43,7 +44,7 @@ describe('ChangeSessionPage', () => {
 
     f.states.set('session-1', sessionState());
     const operation = new ChangeSessionPageUseCase(f.store, f.pages, f.access, f.values,
-      addonPolicy());
+      addonPolicy(), fakeHookSource);
 
     await expect(operation.execute({ ...input, actorId: 'foreign' })).rejects.toMatchObject({ code: 'Forbidden' });
     await expect(operation.execute({ ...input, sessionId: 'missing' })).rejects.toMatchObject({ code: 'NotFound' });

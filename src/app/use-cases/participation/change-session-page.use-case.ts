@@ -7,6 +7,7 @@ import { adminSession, requireOwnedSession } from '../../../domain/participation
 import type {
   IChangeSessionPage, IChangeSessionPageInput,
 } from '../../../ports/inbound/participation/change-session-page.port.js';
+import type { IHookSourcePort } from '../../../ports/outbound/hooks/hook-source.port.js';
 import type { ISessionCatalogAccessPort } from '../../../ports/outbound/participation/session-catalog-access.port.js';
 import type {
   ISessionScheduleValuesPort, ISessionSeriesPagePort,
@@ -16,7 +17,7 @@ import type { ISessionStorePort } from '../../../ports/outbound/participation/se
 export class ChangeSessionPageUseCase implements IChangeSessionPage {
   constructor(private readonly store: ISessionStorePort, private readonly pages: ISessionSeriesPagePort,
     private readonly access: ISessionCatalogAccessPort, private readonly values: ISessionScheduleValuesPort,
-    private readonly addon: IAddonOperationPolicyPort) {}
+    private readonly addon: IAddonOperationPolicyPort, private readonly hooks: IHookSourcePort) {}
 
   async execute(input: IChangeSessionPageInput): Promise<IAdminSession> {
     await this.access.requireAdministrator(input.siteId, input.actorId);
@@ -41,7 +42,17 @@ export class ChangeSessionPageUseCase implements IChangeSessionPage {
     if (state.pageId !== input.pageId) {
       session.changePage(input.pageId, this.values.nextVersion());
       await this.store.changePage(input.siteId, input.sessionId, input.expectedVersion, input.pageId,
-        session.toState().version, addonPermit);
+        session.toState().version, addonPermit, await this.hooks.prepare({
+          siteId: input.siteId,
+          actorId: input.actorId,
+          subject: 'session:' + session.toState().sessionId,
+          checkKey: 'addon.participation.session.page.changed.check',
+          candidate: { sessionId: session.toState().sessionId, pageId: session.toState().pageId },
+          facts: [{
+            hookKey: 'addon.participation.session.page.changed',
+            payload: { sessionId: session.toState().sessionId, pageId: session.toState().pageId },
+          }],
+        }));
     }
 
     return adminSession(session.toState(), this.values.now());

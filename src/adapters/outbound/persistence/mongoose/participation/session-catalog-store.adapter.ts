@@ -5,6 +5,7 @@ import { BusinessError, BusinessErrorCode } from '@zarya/addon-contracts/busines
 import type { ICursorPage } from '@zarya/addon-contracts/cursor-page';
 import type { Connection, Model } from 'mongoose';
 
+import type { IHookCommitIntent } from '../../../../../domain/hooks/hook-change.js';
 import { type ISessionState, SessionStatus } from '../../../../../domain/participation/session.js';
 import {
   type ISessionCatalogQuery, SessionAvailabilityFilter,
@@ -12,6 +13,7 @@ import {
 } from '../../../../../domain/participation/session-catalog.js';
 import type { ISessionStorePort } from '../../../../../ports/outbound/participation/session-store.port.js';
 import { guardedWrite, type IAddonWriteFence } from './addon-write-fence.js';
+import type { IHookTransactionRecorder } from './hook-recorder.js';
 import { type ISessionRecord, sessionModel, sessionRecord, sessionState } from './session.records.js';
 
 interface ISessionCursor { readonly startsAt: Date; readonly sessionId: string; }
@@ -57,15 +59,17 @@ function cursor(encoded: string, query: ISessionCatalogQuery): ISessionCursor {
 export class MongooseSessionCatalogStore implements ISessionStorePort {
   readonly sessions: Model<ISessionRecord>;
 
-  constructor(private readonly connection: Connection, private readonly fence: IAddonWriteFence) {
+  constructor(private readonly connection: Connection,
+    private readonly fence: IAddonWriteFence, private readonly hooks?: IHookTransactionRecorder) {
     this.sessions = sessionModel(connection);
   }
 
-  async create(state: ISessionState, addonPermit?: IAddonOperationPermit): Promise<void> {
+  async create(state: ISessionState,
+    addonPermit?: IAddonOperationPermit, hookChange?: IHookCommitIntent): Promise<void> {
     try {
       await guardedWrite(this.connection, this.fence, addonPermit, async(transaction) => {
         await this.sessions.create([sessionRecord(state)], { session: transaction });
-      });
+      }, hookChange, this.hooks);
     } catch (error) {
       if (error instanceof Error && 'code' in error && error.code === 11000) {
         throw new BusinessError(BusinessErrorCode.Conflict, 'Session identity already exists');
@@ -120,36 +124,39 @@ export class MongooseSessionCatalogStore implements ISessionStorePort {
     };
   }
 
-  async cancel(state: ISessionState, expectedVersion: string, addonPermit?: IAddonOperationPermit): Promise<void> {
+  async cancel(state: ISessionState,
+    expectedVersion: string, addonPermit?: IAddonOperationPermit, hookChange?: IHookCommitIntent): Promise<void> {
     const row = sessionRecord(state);
 
     if (state.status !== SessionStatus.Cancelled || state.version === expectedVersion) {
       throw new BusinessError(BusinessErrorCode.Validation, 'Invalid cancellation write');
     }
 
-    const result = await guardedWrite(this.connection, this.fence, addonPermit, async (transaction) =>
-      this.sessions.updateOne(
+    await guardedWrite(this.connection, this.fence, addonPermit, async (transaction) => {
+      const result = await this.sessions.updateOne(
         { _id: row._id, siteId: state.siteId, version: expectedVersion },
         { $set: { status: state.status, overridden: state.overridden, version: state.version } },
         { session: transaction },
-      ).exec());
+      ).exec();
 
-    if (result.matchedCount !== 1) {
-      throw new BusinessError(BusinessErrorCode.StaleWrite, 'Session changed');
-    }
+      if (result.matchedCount !== 1) {
+        throw new BusinessError(BusinessErrorCode.StaleWrite, 'Session changed');
+      }
+    }, hookChange, this.hooks);
   }
 
   async changePage(siteId: string, sessionId: string, expectedVersion: string, pageId: string,
-    nextVersion: string, addonPermit?: IAddonOperationPermit): Promise<void> {
-    const result = await guardedWrite(this.connection, this.fence, addonPermit, async (transaction) =>
-      this.sessions.updateOne(
+    nextVersion: string, addonPermit?: IAddonOperationPermit, hookChange?: IHookCommitIntent): Promise<void> {
+    await guardedWrite(this.connection, this.fence, addonPermit, async (transaction) => {
+      const result = await this.sessions.updateOne(
         { siteId, _id: sessionId, version: expectedVersion },
         { $set: { pageId, version: nextVersion } },
         { session: transaction },
-      ).exec());
+      ).exec();
 
-    if (result.matchedCount !== 1) {
-      throw new BusinessError(BusinessErrorCode.StaleWrite, 'Session changed');
-    }
+      if (result.matchedCount !== 1) {
+        throw new BusinessError(BusinessErrorCode.StaleWrite, 'Session changed');
+      }
+    }, hookChange, this.hooks);
   }
 }

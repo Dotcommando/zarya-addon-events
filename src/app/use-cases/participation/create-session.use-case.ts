@@ -3,6 +3,7 @@ import { requireText } from '@zarya/addon-contracts/validation';
 
 import { Session, SessionStatus } from '../../../domain/participation/session.js';
 import type { ICreateSession, ICreateSessionInput } from '../../../ports/inbound/participation/create-session.port.js';
+import type { IHookSourcePort } from '../../../ports/outbound/hooks/hook-source.port.js';
 import type { ISessionCatalogAccessPort } from '../../../ports/outbound/participation/session-catalog-access.port.js';
 import type {
   ISessionScheduleValuesPort, ISessionSeriesPagePort,
@@ -12,7 +13,7 @@ import type { ISessionStorePort } from '../../../ports/outbound/participation/se
 export class CreateSessionUseCase implements ICreateSession {
   constructor(private readonly store: ISessionStorePort, private readonly pages: ISessionSeriesPagePort,
     private readonly access: ISessionCatalogAccessPort, private readonly values: ISessionScheduleValuesPort,
-    private readonly addon: IAddonOperationPolicyPort) {}
+    private readonly addon: IAddonOperationPolicyPort, private readonly hooks: IHookSourcePort) {}
 
   async execute(input: ICreateSessionInput): Promise<Session> {
     await this.access.requireAdministrator(input.siteId, input.actorId);
@@ -39,7 +40,17 @@ export class CreateSessionUseCase implements ICreateSession {
       version: this.values.nextVersion(),
     });
 
-    await this.store.create(session.toState(), addonPermit);
+    await this.store.create(session.toState(), addonPermit, await this.hooks.prepare({
+      siteId: input.siteId,
+      actorId: input.actorId,
+      subject: 'session:' + session.toState().sessionId,
+      checkKey: 'addon.participation.session.created.check',
+      candidate: { sessionId: session.toState().sessionId, pageId: session.toState().pageId },
+      facts: [{
+        hookKey: 'addon.participation.session.created',
+        payload: { sessionId: session.toState().sessionId, pageId: session.toState().pageId },
+      }],
+    }));
 
     return session;
   }

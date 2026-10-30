@@ -2,6 +2,7 @@ import { vi } from 'vitest';
 
 import { CancelSessionUseCase } from '../../../src/app/use-cases/participation/cancel-session.use-case.js';
 import { addonPolicy } from '../../support/addons.js';
+import { fakeHookSource } from '../../support/hook-source.js';
 import { sessionFixture, sessionState } from '../../support/session-catalog.js';
 
 describe('CancelSession', () => {
@@ -13,7 +14,7 @@ describe('CancelSession', () => {
 
     f.states.set(state.sessionId, state);
     const cancel = new CancelSessionUseCase(f.store, f.access, f.values,
-      addonPolicy());
+      addonPolicy(), fakeHookSource);
     const result = await cancel.execute(input);
 
     expect(result).toMatchObject({
@@ -33,7 +34,7 @@ describe('CancelSession', () => {
       ...sessionState(), startsAt: new Date('2020-01-01T10:00:00Z'), endsAt: new Date('2020-01-01T11:00:00Z'),
     });
     const cancel = new CancelSessionUseCase(f.store, f.access, f.values,
-      addonPolicy());
+      addonPolicy(), fakeHookSource);
 
     await expect(cancel.execute({ ...input, actorId: 'foreign' })).rejects.toMatchObject({ code: 'Forbidden' });
     await expect(cancel.execute({ ...input, sessionId: 'missing' })).rejects.toMatchObject({ code: 'NotFound' });

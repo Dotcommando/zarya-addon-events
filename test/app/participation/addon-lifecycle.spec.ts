@@ -8,6 +8,7 @@ import {
 import { RescheduleSessionUseCase } from '../../../src/app/use-cases/participation/reschedule-session.use-case.js';
 import type { ISessionManagementPort } from '../../../src/ports/outbound/participation/session-management.port.js';
 import { addonPolicy } from '../../support/addons.js';
+import { fakeHookSource } from '../../support/hook-source.js';
 import { participationFixture, participationInput } from '../../support/participation.js';
 import { sessionFixture, sessionState } from '../../support/session-catalog.js';
 
@@ -39,7 +40,7 @@ describe('add-on participation lifecycle', () => {
     };
 
     f.states.set(state.sessionId, state);
-    const operation = new RemoveSessionUseCase(f.store, management, f.access, f.values, addonPolicy());
+    const operation = new RemoveSessionUseCase(f.store, management, f.access, f.values, addonPolicy(), fakeHookSource);
     const input = {
       siteId: state.siteId,
       actorId: 'operator',

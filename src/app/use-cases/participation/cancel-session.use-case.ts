@@ -6,6 +6,7 @@ import type { IAdminSession } from '../../../domain/participation/participation-
 import { SessionStatus } from '../../../domain/participation/session.js';
 import { adminSession, requireOwnedSession } from '../../../domain/participation/session-catalog.js';
 import type { ICancelSession, ICancelSessionInput } from '../../../ports/inbound/participation/cancel-session.port.js';
+import type { IHookSourcePort } from '../../../ports/outbound/hooks/hook-source.port.js';
 import type { ISessionCatalogAccessPort } from '../../../ports/outbound/participation/session-catalog-access.port.js';
 import type {
   ISessionScheduleValuesPort,
@@ -15,7 +16,7 @@ import type { ISessionStorePort } from '../../../ports/outbound/participation/se
 export class CancelSessionUseCase implements ICancelSession {
   constructor(private readonly store: ISessionStorePort, private readonly access: ISessionCatalogAccessPort,
     private readonly values: ISessionScheduleValuesPort,
-    private readonly addon: IAddonOperationPolicyPort) {}
+    private readonly addon: IAddonOperationPolicyPort, private readonly hooks: IHookSourcePort) {}
 
   async execute(input: ICancelSessionInput): Promise<IAdminSession> {
     await this.access.requireAdministrator(input.siteId, input.actorId);
@@ -36,7 +37,17 @@ export class CancelSessionUseCase implements ICancelSession {
     }
     if (state.status !== SessionStatus.Cancelled) {
       session.cancel(this.values.nextVersion(), true);
-      await this.store.cancel(session.toState(), input.expectedVersion, addonPermit);
+      await this.store.cancel(session.toState(), input.expectedVersion, addonPermit, await this.hooks.prepare({
+        siteId: input.siteId,
+        actorId: input.actorId,
+        subject: 'session:' + session.toState().sessionId,
+        checkKey: 'addon.participation.session.cancelled.check',
+        candidate: { sessionId: session.toState().sessionId, pageId: session.toState().pageId },
+        facts: [{
+          hookKey: 'addon.participation.session.cancelled',
+          payload: { sessionId: session.toState().sessionId, pageId: session.toState().pageId },
+        }],
+      }));
     }
 
     return adminSession(session.toState(), this.values.now());

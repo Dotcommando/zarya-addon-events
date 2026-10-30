@@ -7,7 +7,7 @@ export const participationDefinition: IAddonDefinition = {
   name: { en: 'Events', ru: 'События' },
   description: { en: 'Recurring events and participation requests', ru: 'Циклические события и заявки участников' },
   contractVersion: 1,
-  implementationVersion: '0.2.0',
+  implementationVersion: '0.3.0',
   configurationSchemaVersion: 1,
   adminComponentId: 'participation',
   snippetIds: ['ParticipationForm'],

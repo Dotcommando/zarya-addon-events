@@ -6,6 +6,7 @@ import { requireOwnedSession } from '../../../domain/participation/session-catal
 import {
   type IRemoveSession, type IRemoveSessionInput, SessionRemovalOutcome,
 } from '../../../ports/inbound/participation/remove-session.port.js';
+import type { IHookSourcePort } from '../../../ports/outbound/hooks/hook-source.port.js';
 import type { ISessionCatalogAccessPort } from '../../../ports/outbound/participation/session-catalog-access.port.js';
 import type {
   ISessionManagementPort,
@@ -18,7 +19,7 @@ import type { ISessionStorePort } from '../../../ports/outbound/participation/se
 export class RemoveSessionUseCase implements IRemoveSession {
   constructor(private readonly sessions: ISessionStorePort, private readonly management: ISessionManagementPort,
     private readonly access: ISessionCatalogAccessPort, private readonly values: ISessionScheduleValuesPort,
-    private readonly addon: IAddonOperationPolicyPort) {}
+    private readonly addon: IAddonOperationPolicyPort, private readonly hooks: IHookSourcePort) {}
 
   async execute(input: IRemoveSessionInput): Promise<{ readonly outcome: SessionRemovalOutcome }> {
     await this.access.requireAdministrator(input.siteId, input.actorId);
@@ -37,11 +38,31 @@ export class RemoveSessionUseCase implements IRemoveSession {
     }
     if (await this.management.hasRequests(input.siteId, input.sessionId)) {
       session.cancel(this.values.nextVersion(), true);
-      await this.sessions.cancel(session.toState(), input.expectedVersion, permit);
+      await this.sessions.cancel(session.toState(), input.expectedVersion, permit, await this.hooks.prepare({
+        siteId: input.siteId,
+        actorId: input.actorId,
+        subject: 'session:' + state.sessionId,
+        checkKey: 'addon.participation.session.cancelled.check',
+        candidate: { sessionId: state.sessionId, pageId: state.pageId },
+        facts: [{
+          hookKey: 'addon.participation.session.cancelled',
+          payload: { sessionId: state.sessionId, pageId: state.pageId },
+        }],
+      }));
 
       return { outcome: SessionRemovalOutcome.Cancelled };
     }
-    await this.management.remove(state, input.expectedVersion, permit);
+    await this.management.remove(state, input.expectedVersion, permit, await this.hooks.prepare({
+      siteId: input.siteId,
+      actorId: input.actorId,
+      subject: 'session:' + state.sessionId,
+      checkKey: 'addon.participation.session.removed.check',
+      candidate: { sessionId: state.sessionId, pageId: state.pageId },
+      facts: [{
+        hookKey: 'addon.participation.session.removed',
+        payload: { sessionId: state.sessionId, pageId: state.pageId },
+      }],
+    }));
 
     return { outcome: SessionRemovalOutcome.Removed };
   }
