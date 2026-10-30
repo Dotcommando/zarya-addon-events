@@ -20,6 +20,18 @@ reload and Back/Forward preserve month/day context. The Schedule section lists
 recurring series independently of their date horizon and supports creation and
 whole-future-series changes using existing identity, occupancy and exception rules.
 
+Dates before the current site-local day use the CMS muted row palette. Empty past
+dates cannot be selected; dates with events retain access to their history.
+Today/future dates and all enabled calendar controls use shared CMS hover feedback.
+Previous/next month buttons use arrow icons on either side of Today, with translated
+accessible names. Disabled controls retain their disabled state on hover.
+
+Month navigation retains the last successfully loaded calendar, including its
+month, time zone and events. A transparent overlay and centered progress indicator
+block calendar controls during loading. Only the latest successful response swaps
+the complete snapshot. Failures retain the calendar and expose an explicit retry;
+the loading indicator respects reduced motion and has an accessible status label.
+
 Time zones are CMS display/input settings, not live scheduling configuration.
 Changing site settings never shifts UTC instants or rewrites series. New UI inputs
 are converted once to fixed UTC patterns; existing technical timeZone fields are

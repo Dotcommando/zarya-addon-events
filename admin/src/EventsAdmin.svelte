@@ -10,6 +10,13 @@
   import EventEditor from './EventEditor.svelte';
   import EventsSettings from './EventsSettings.svelte';
   import ScheduleEditor from './ScheduleEditor.svelte';
+
+  interface ICalendarSnapshot {
+    readonly siteId: string;
+    readonly month: string;
+    readonly timeZone: string;
+    readonly events: readonly IEvent[];
+  }
   let { host }: { host: IAddonAdminHost } = $props();
   const ru = $derived(host.language === 'ru');
   const today = $derived(Temporal.Now.plainDateISO(host.timeZone).toString());
@@ -17,6 +24,10 @@
   const scheduleView = $derived([EventsView.Schedule, EventsView.Series, EventsView.NewSeries].includes(location.view));
   const dayView = $derived([EventsView.Day, EventsView.Event, EventsView.NewEvent].includes(location.view));
   let events = $state<readonly IEvent[]>([]);
+  let calendarSnapshot = $state<ICalendarSnapshot | null>(null);
+  const calendar = $derived(calendarSnapshot?.siteId === host.siteId ? calendarSnapshot : null);
+  const calendarZone = $derived(calendar?.timeZone ?? host.timeZone);
+  const calendarToday = $derived(Temporal.Now.plainDateISO(calendarZone).toString());
   let schedules = $state<readonly ISeries[]>([]);
   let selectedEvent = $state<IEvent | null>(null);
   let selectedSeries = $state<ISeries | null>(null);
@@ -78,6 +89,7 @@
     previousQuery = host.location;
     const route = location;
     const zone = host.timeZone;
+    const siteId = host.siteId;
 
     loading = true;
     error = false;
@@ -114,6 +126,10 @@
         if (captured === generation) {
           events = rows;
           selectedEvent = selected;
+
+          if (route.view === EventsView.Calendar) {
+            calendarSnapshot = { siteId, month: route.month, timeZone: zone, events: rows };
+          }
         }
       }
     } catch {
@@ -131,7 +147,7 @@
       }
     }
   }
-  const loadKey = $derived(host.location + '|' + host.timeZone + '|' + revision);
+  const loadKey = $derived(host.siteId + '|' + host.location + '|' + host.timeZone + '|' + revision);
   $effect(() => {
     const key = loadKey;
 
@@ -167,19 +183,32 @@
     aria-current="page">{title(selectedEvent.pageId)}</span>{/if}
       </nav>
     {/if}
-    {#if loading}<p class="_events-status" role="status">{ru ? 'Загрузка…' : 'Loading…'}</p>{/if}
+    {#if loading && location.view !== EventsView.Calendar}
+      <p class="_events-status" role="status">{ru ? 'Загрузка…' : 'Loading…'}</p>
+    {/if}
     {#if error}<div class="cms-callout"><p class="cms-error" role="alert">{ru
       ? 'Не удалось загрузить события. Повторите загрузку.' : 'Could not load events. Try again.'}</p>
       <button class="cms-secondary" onclick={() => {
         revision++;
       }}>{ru ? 'Обновить' : 'Refresh'}</button></div>
-    {:else if !loading}
+    {/if}
+    {#if location.view === EventsView.Calendar}
+      <div class="calendar-stage" aria-busy={loading}>
+        <CalendarMonth month={calendar?.month ?? location.month} today={calendarToday}
+          language={host.language} timeZone={calendarZone} events={calendar?.events ?? []}
+          titles={host.pages} busy={loading || error || mutating}
+          onMonth={(month) => go(EventsView.Calendar, { month })}
+          onDay={(date) => go(EventsView.Day, { date })} onEvent={(id, date) => go(EventsView.Event, { id, date })} />
+        {#if loading}
+          <div class="_calendar-overlay" role="status" aria-label={ru ? 'Загрузка календаря' : 'Loading calendar'}>
+            <span class="_calendar-spinner" aria-hidden="true"></span>
+            <span class="_calendar-loading-label">{ru ? 'Загрузка календаря' : 'Loading calendar'}</span>
+          </div>
+        {/if}
+      </div>
+    {:else if !loading && !error}
       {#if location.view === EventsView.Settings}
         <EventsSettings host={editorHost} />
-      {:else if location.view === EventsView.Calendar}
-        <CalendarMonth month={location.month} {today} language={host.language} timeZone={host.timeZone} {events}
-          titles={host.pages} busy={loading} onMonth={(month) => go(EventsView.Calendar, { month })}
-          onDay={(date) => go(EventsView.Day, { date })} onEvent={(id, date) => go(EventsView.Event, { id, date })} />
       {:else if location.view === EventsView.Day}
         <div class="_events-heading"><h1>{dateLabel(location.date)}</h1>
           {#if host.enabled}<button class="cms-primary" onclick={() => go(EventsView.NewEvent)}>{ru
@@ -253,6 +282,35 @@
   .cms-tabs { padding: 0 8px; }
   .events-admin:has(> :global(._events-body[data-scrolled="true"])) > .cms-tabs { box-shadow: 0 4px 8px #252d2720; }
   ._events-body { flex: 1; min-height: 0; min-width: 0; overflow: auto; padding: 12px 12px 24px; }
+  .calendar-stage { position: relative; min-height: 320px; }
+  ._calendar-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: transparent;
+    cursor: wait;
+  }
+  ._calendar-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--cms-border);
+    border-top-color: var(--cms-accent);
+    border-radius: 50%;
+    animation: calendar-spin 800ms linear infinite;
+  }
+  ._calendar-loading-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  @keyframes calendar-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { ._calendar-spinner { animation: none; } }
   .events-breadcrumbs {
     display: flex;
     align-items: center;

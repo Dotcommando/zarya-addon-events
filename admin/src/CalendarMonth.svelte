@@ -46,14 +46,22 @@
 </script>
 <div class="calendar-toolbar">
   <div class="_calendar-step">
-    <button class="cms-secondary" disabled={busy} onclick={() => onMonth(today.slice(0, 7))}>{ru ? 'Сегодня'
-      : 'Today'}</button>
     <button class="cms-secondary _calendar-arrow" disabled={busy || current.year === 1 && current.month === 1}
       aria-label={ru ? 'Предыдущий месяц' : 'Previous month'}
-      onclick={() => onMonth(current.subtract({ months: 1 }).toString())}>‹</button>
+      onclick={() => onMonth(current.subtract({ months: 1 }).toString())}>
+      <svg class="cms-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+        <path d="M19 12H5m6-6-6 6 6 6" />
+      </svg>
+    </button>
+    <button class="cms-secondary" disabled={busy} onclick={() => onMonth(today.slice(0, 7))}>{ru ? 'Сегодня'
+      : 'Today'}</button>
     <button class="cms-secondary _calendar-arrow" disabled={busy || current.year === 9999 && current.month === 12}
       aria-label={ru ? 'Следующий месяц' : 'Next month'}
-      onclick={() => onMonth(current.add({ months: 1 }).toString())}>›</button>
+      onclick={() => onMonth(current.add({ months: 1 }).toString())}>
+      <svg class="cms-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+        <path d="M5 12h14m-6-6 6 6-6 6" />
+      </svg>
+    </button>
   </div>
   <div class="_calendar-period">
     <label><span class="_calendar-label">{ru ? 'Месяц' : 'Month'}</span>
@@ -73,9 +81,11 @@
   {#each cells as date (date)}
     {@const dayEvents = events.filter((item) => localDate(item.startsAt, timeZone) === date)}
     <div class="_calendar-cell" class:_calendar-cell__outside={!date.startsWith(month)}
+      class:_calendar-cell__past={date < today}
       class:_calendar-cell__today={date === today}>
       <button class="_calendar-day" aria-label={dayLabel(date) + ' · ' + dayEvents.length}
-        aria-current={date === today ? 'date' : undefined} disabled={busy} onclick={() => onDay(date)}>
+        aria-current={date === today ? 'date' : undefined} disabled={busy || date < today && !dayEvents.length}
+        onclick={() => onDay(date)}>
         <span>{Number(date.slice(-2))}</span>
         {#if dayEvents.length}<span class="_calendar-count">{dayEvents.length}</span>{/if}
       </button>
@@ -103,7 +113,7 @@
 
   }
   ._calendar-step { display: flex; gap: 6px; }
-  ._calendar-arrow { width: 44px; padding: 0; font-size: 25px; }
+  ._calendar-arrow { display: inline-grid; place-items: center; width: 44px; padding: 0; }
   ._calendar-period {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 100px;
@@ -145,6 +155,10 @@
   }
   ._calendar-cell__outside { background: var(--cms-row); }
   ._calendar-cell__outside ._calendar-day { color: var(--cms-muted); }
+  ._calendar-cell__past { background: var(--cms-row); }
+  ._calendar-cell__past ._calendar-day { color: var(--cms-muted); }
+  ._calendar-cell__past ._calendar-day:disabled { cursor: default; opacity: 1; }
+  ._calendar-day:hover:not(:disabled) { background: var(--cms-row-hover); }
   ._calendar-day {
     display: flex;
     flex-direction: column;
@@ -201,7 +215,7 @@
     white-space: nowrap;
 
   }
-  ._calendar-event:hover { background: var(--cms-row-hover); }
+  ._calendar-event:hover:not(:disabled), ._calendar-more:hover:not(:disabled) { background: var(--cms-row-hover); }
   ._calendar-event__cancelled { color: var(--cms-muted); text-decoration: line-through; }
   ._calendar-more { background: transparent; }
   @media (min-width: 576px) {
