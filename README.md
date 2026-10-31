@@ -1,7 +1,7 @@
-# Zarya Participation
+# Zarya Events
 
 Optional recurring events and participation requests for CMS Zarya. This is a
-library installed as @zarya/events@0.3.5 in the shared backend and admin
+library installed as @zarya/events@0.4.0 in the shared backend and admin
 build, not a separate application. Game content remains ordinary CMS pages.
 
 Packages 0.3.1–0.3.5 update calendar presentation only. The last loaded calendar
@@ -9,7 +9,13 @@ stays under a transparent interaction blocker with a visible progress indicator
 until the next month is ready.
 Today, past/future weekdays and past/future weekends use distinct CMS palette tones.
 The server implementation remains 0.3.0; configuration and schemas are unchanged.
-Existing events and requests do not need migration. Runtime artifacts remain immutable.
+Runtime artifacts remain immutable.
+
+Version 0.4.0 completes the technical rename: connection/component/producer `events`
+and hooks `addon.events.session.*`. Existing installations apply their identity
+migration and select a new immutable runtime artifact while offline. Settings,
+subscriptions, schema receipts and identity secrets are retained. See
+[ADR 0004](docs/adr/0004-short-events-identity.md).
 
 The source follows layer-first Hexagonal Architecture. Host services are explicit
 ports; @zarya/addon-contracts@0.3.0 is the only inward external contract. No source
@@ -52,7 +58,7 @@ UTC values, the site add-on policy and a real transactional connection fence.
 Persistence adapters own their session/request/exclusion data and Mongoose
 sessions. Missing dependencies fail explicitly; there is no fake production mode.
 
-The host provides the management section at /admin/sites/:siteId/addons/participation.
+The host provides the management section at /admin/sites/:siteId/addons/events.
 Its registered Svelte component supports a date-range agenda, one-off/weekly event
 creation, scoped schedule edits, removal and private request decisions. Public
 form sources are adopted through the CMS rendering operations. The sample site

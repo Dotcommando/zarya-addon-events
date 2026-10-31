@@ -46,10 +46,10 @@ export class ChangeSessionPageUseCase implements IChangeSessionPage {
           siteId: input.siteId,
           actorId: input.actorId,
           subject: 'session:' + session.toState().sessionId,
-          checkKey: 'addon.participation.session.page.changed.check',
+          checkKey: 'addon.events.session.page.changed.check',
           candidate: { sessionId: session.toState().sessionId, pageId: session.toState().pageId },
           facts: [{
-            hookKey: 'addon.participation.session.page.changed',
+            hookKey: 'addon.events.session.page.changed',
             payload: { sessionId: session.toState().sessionId, pageId: session.toState().pageId },
           }],
         }));

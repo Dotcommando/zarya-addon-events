@@ -1,19 +1,19 @@
 import type { IAddonConfiguration, IAddonDefinition } from '@zarya/addon-contracts/addons';
 import { BusinessError, BusinessErrorCode } from '@zarya/addon-contracts/business-error';
 
-export const participationDefinition: IAddonDefinition = {
-  addonKey: 'participation',
+export const eventsDefinition: IAddonDefinition = {
+  addonKey: 'events',
   adminMenu: { en: 'Events', ru: 'События' },
   name: { en: 'Events', ru: 'События' },
   description: { en: 'Recurring events and participation requests', ru: 'Циклические события и заявки участников' },
   contractVersion: 1,
-  implementationVersion: '0.3.0',
+  implementationVersion: '0.4.0',
   configurationSchemaVersion: 1,
-  adminComponentId: 'participation',
+  adminComponentId: 'events',
   snippetIds: ['ParticipationForm'],
 };
 
-export function validateParticipationConfiguration(configuration: IAddonConfiguration): void {
+export function validateEventsConfiguration(configuration: IAddonConfiguration): void {
   const labels = configuration.values.adminMenuLabels;
 
   if (configuration.schemaVersion !== 1 || Object.keys(configuration.values).some((key) => key !== 'adminMenuLabels')

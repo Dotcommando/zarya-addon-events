@@ -44,10 +44,10 @@ export class CreateSessionUseCase implements ICreateSession {
       siteId: input.siteId,
       actorId: input.actorId,
       subject: 'session:' + session.toState().sessionId,
-      checkKey: 'addon.participation.session.created.check',
+      checkKey: 'addon.events.session.created.check',
       candidate: { sessionId: session.toState().sessionId, pageId: session.toState().pageId },
       facts: [{
-        hookKey: 'addon.participation.session.created',
+        hookKey: 'addon.events.session.created',
         payload: { sessionId: session.toState().sessionId, pageId: session.toState().pageId },
       }],
     }));

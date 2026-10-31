@@ -42,10 +42,10 @@ export class RemoveSessionUseCase implements IRemoveSession {
         siteId: input.siteId,
         actorId: input.actorId,
         subject: 'session:' + state.sessionId,
-        checkKey: 'addon.participation.session.cancelled.check',
+        checkKey: 'addon.events.session.cancelled.check',
         candidate: { sessionId: state.sessionId, pageId: state.pageId },
         facts: [{
-          hookKey: 'addon.participation.session.cancelled',
+          hookKey: 'addon.events.session.cancelled',
           payload: { sessionId: state.sessionId, pageId: state.pageId },
         }],
       }));
@@ -56,10 +56,10 @@ export class RemoveSessionUseCase implements IRemoveSession {
       siteId: input.siteId,
       actorId: input.actorId,
       subject: 'session:' + state.sessionId,
-      checkKey: 'addon.participation.session.removed.check',
+      checkKey: 'addon.events.session.removed.check',
       candidate: { sessionId: state.sessionId, pageId: state.pageId },
       facts: [{
-        hookKey: 'addon.participation.session.removed',
+        hookKey: 'addon.events.session.removed',
         payload: { sessionId: state.sessionId, pageId: state.pageId },
       }],
     }));
