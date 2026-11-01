@@ -4,6 +4,10 @@ Optional recurring events and participation requests for CMS Zarya. This is a
 library installed as @zarya/events@0.4.1 in the shared backend and admin
 build, not a separate application. Game content remains ordinary CMS pages.
 
+Requires CMS Zarya exactly 0.8.0, declared as `zarya.cmsVersion` in package.json.
+The SDK peer version is independent of the CMS version. This metadata records
+compatibility; it does not itself enforce a host-version check at runtime.
+
 Packages 0.3.1–0.3.5 update calendar presentation only. The last loaded calendar
 stays under a transparent interaction blocker with a visible progress indicator
 until the next month is ready.
