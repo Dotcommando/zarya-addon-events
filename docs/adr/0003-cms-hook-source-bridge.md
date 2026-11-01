@@ -17,8 +17,9 @@ also permits code-owned handlers to consume supported CMS hooks through bounded
 pure source, scoped queries and explicitly granted commands.
 
 Fresh installations need the add-on's complete owned schema. Migration 0000-events
-now owns session_series, sessions, participation_requests and participation_operations;
-0001-session-exclusions retains its existing responsibility. These definitions
+now owns session_series, sessions, participation_requests, participation_operations
+and session_exclusions. At the owner's request on 2026-11-01, the session exclusion
+schema and index were consolidated into this single baseline migration. These definitions
 were transferred from the existing installation's compiled schema catalogue;
 no business data was copied. The clean CMS baseline does not own these collections.
 
