@@ -4,7 +4,7 @@
   import { tick, untrack } from 'svelte';
   import { SvelteMap } from 'svelte/reactivity';
 
-  import { allEvents, event, type IEvent, type ISeries, record, series } from './api';
+  import { allEvents, event, type ICalendarEvent, type IEvent, type ISeries, record, series } from './api';
   import { calendarDays, displayPattern, EventsView, localDate, parseLocation } from './calendar';
   import CalendarMonth from './CalendarMonth.svelte';
   import EventEditor from './EventEditor.svelte';
@@ -15,7 +15,7 @@
     readonly siteId: string;
     readonly month: string;
     readonly timeZone: string;
-    readonly events: readonly IEvent[];
+    readonly events: readonly ICalendarEvent[];
   }
   let { host }: { host: IAddonAdminHost } = $props();
   const ru = $derived(host.language === 'ru');

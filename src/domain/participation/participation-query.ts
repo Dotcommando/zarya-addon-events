@@ -36,6 +36,10 @@ export interface IAdminSession extends IBookableSession {
   readonly seriesId: string | null;
 }
 
+export interface IAdminSessionSummary extends IAdminSession {
+  readonly pendingRequestCount: number;
+}
+
 export interface IAdminParticipation {
   readonly requestId: string;
   readonly requestReference: string;

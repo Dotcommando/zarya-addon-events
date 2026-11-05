@@ -1,10 +1,10 @@
 # Zarya Events
 
 Optional recurring events and participation requests for CMS Zarya. This is a
-library installed as @zarya/events@0.4.1 in the shared backend and admin
+library installed as @zarya/events@0.4.2 in the shared backend and admin
 build, not a separate application. Game content remains ordinary CMS pages.
 
-Requires CMS Zarya exactly 0.8.0, declared as `zarya.cmsVersion` in package.json.
+Requires CMS Zarya 0.9.2 or later, declared as the minimum `zarya.cmsVersion` in package.json.
 The SDK peer version is independent of the CMS version. This metadata records
 compatibility; it does not itself enforce a host-version check at runtime.
 
@@ -27,6 +27,13 @@ imports or runtime symlinks point into a CMS checkout.
 
 Package 0.4.1 updates the exact SDK peer to 0.4.0. Its business implementation
 remains 0.4.0; configuration, schemas and hook identities are unchanged.
+
+Package 0.4.2 exposes the existing public sessions query as
+`cms.extensions.events.sessions.list` and adds site-scoped Pending request counts
+to administrative session summaries. Calendar day badges show Pending request
+counts in the warning palette; zero badges are hidden. Package and runtime
+implementation versions are both 0.4.2. CMS 0.9.2 is the minimum host version;
+configuration, schemas and Events hook identities are unchanged.
 
 ## Development
 
@@ -68,8 +75,8 @@ sessions. Missing dependencies fail explicitly; there is no fake production mode
 The host provides the management section at /admin/sites/:siteId/addons/events.
 Its registered Svelte component supports a date-range agenda, one-off/weekly event
 creation, scoped schedule edits, removal and private request decisions. Public
-form sources are adopted through the CMS rendering operations. The sample site
-installer lives in the host; enabling an add-on never creates sample content.
+form sources are adopted through the CMS rendering operations and transferred
+using reviewed CMS backups. Enabling an add-on never creates sample content.
 
 New migrations are in migrations/ and use the host's checksum-verifying runner
 with owner participation. Historical session/request schema migrations remain

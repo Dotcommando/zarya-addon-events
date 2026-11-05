@@ -20,7 +20,7 @@ describe('ListAdminSessions', () => {
     f.states.set('b', { ...sessionState('b'), status: SessionStatus.Cancelled, heldPlaces: 7 });
     f.states.set('c', { ...sessionState('c'), siteId: 'other' });
     const list = new ListAdminSessionsUseCase(f.store, f.access, f.values,
-      addonPolicy());
+      addonPolicy(), { pendingCounts: async () => new Map() });
     const first = await list.execute({ ...input, limit: 1 });
 
     expect(first.items).toHaveLength(1);
@@ -33,7 +33,7 @@ describe('ListAdminSessions', () => {
   it('rejects invalid ranges/limits, denied reads and inconsistent returned scope', async () => {
     const f = sessionFixture();
     const list = new ListAdminSessionsUseCase(f.store, f.access, f.values,
-      addonPolicy());
+      addonPolicy(), { pendingCounts: async () => new Map() });
 
     await expect(list.execute({ ...input, rangeEnd: input.rangeStart })).rejects.toMatchObject({ code: 'Validation' });
     await expect(list.execute({ ...input, limit: 101 })).rejects.toMatchObject({ code: 'Validation' });
@@ -44,5 +44,22 @@ describe('ListAdminSessions', () => {
     await expect(list.execute(input)).rejects.toMatchObject({ code: 'Scope' });
     vi.mocked(f.store.list).mockResolvedValueOnce({ items: [sessionState('b'), sessionState('a')], nextCursor: null });
     await expect(list.execute(input)).rejects.toMatchObject({ code: 'Scope' });
+  });
+
+  it('returns pending request counts separately from reserved places for each listed session', async () => {
+    const f = sessionFixture();
+
+    f.states.set('a', { ...sessionState('a'), heldPlaces: 4 });
+    f.states.set('b', sessionState('b'));
+    const pendingCounts = vi.fn().mockResolvedValue(new Map([['a', 2]]));
+    const list = new ListAdminSessionsUseCase(f.store, f.access, f.values, addonPolicy(), {
+      pendingCounts,
+    });    const result = await list.execute(input);
+
+    expect(result.items.map(item => ({ sessionId: item.sessionId, pendingRequestCount: item.pendingRequestCount })))
+      .toEqual([{ sessionId: 'a', pendingRequestCount: 2 }, { sessionId: 'b', pendingRequestCount: 0 }]);
+    expect(pendingCounts).toHaveBeenCalledWith('site-1', ['a', 'b']);
+    await expect(list.execute({ ...input, actorId: 'untrusted' })).rejects.toMatchObject({ code: 'Forbidden' });
+    expect(pendingCounts).toHaveBeenCalledOnce();
   });
 });

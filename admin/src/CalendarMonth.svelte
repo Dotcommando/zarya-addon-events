@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Temporal } from '@js-temporal/polyfill';
 
-  import type { IEvent } from './api';
+  import type { ICalendarEvent } from './api';
   import { calendarDays, localDate } from './calendar';
   let { month, today, language, timeZone, events, titles, busy, onMonth, onDay, onEvent }: {
     month: string;
@@ -10,7 +10,7 @@
     timeZone: string;
     titles: readonly { pageId: string;
       title: string }[];
-    events: readonly IEvent[];
+    events: readonly ICalendarEvent[];
     busy: boolean;
     onMonth: (month: string) => void;
     onDay: (date: string) => void;
@@ -82,17 +82,22 @@
   {/each}
   {#each cells as date (date)}
     {@const dayEvents = events.filter((item) => localDate(item.startsAt, timeZone) === date)}
+    {@const pendingRequests = dayEvents.reduce((total, item) => total + item.pendingRequestCount, 0)}
     {@const isPast = Temporal.PlainDate.compare(date, today) < 0}
     {@const isWeekend = Temporal.PlainDate.from(date).dayOfWeek >= 6}
     <div class="_calendar-cell" class:_calendar-cell__weekend={isWeekend}
       class:_calendar-cell__past={isPast}
       class:_calendar-cell__interactive={!busy && (!isPast || dayEvents.length > 0)}
       class:_calendar-cell__today={date === today}>
-      <button class="_calendar-day" aria-label={dayLabel(date) + ' · ' + dayEvents.length}
+      <button class="_calendar-day"
+        aria-label={dayLabel(date) + ' · ' + (ru ? 'Событий: ' : 'Events: ') + dayEvents.length
+        + ' · ' + (ru ? 'Неподтверждённых заявок: ' : 'Pending requests: ') + pendingRequests}
         aria-current={date === today ? 'date' : undefined} disabled={busy || isPast && !dayEvents.length}
         onclick={() => onDay(date)}>
         <span>{Number(date.slice(-2))}</span>
-        {#if dayEvents.length}<span class="_calendar-count">{dayEvents.length}</span>{/if}
+        {#if pendingRequests > 0}<span class="_calendar-count"
+          title={(ru ? 'Неподтверждённых заявок: ' : 'Pending requests: ') + pendingRequests}
+          >{pendingRequests}</span>{/if}
       </button>
       <div class="_calendar-entries">
         {#each dayEvents.slice(0, 2) as item (item.sessionId)}
@@ -221,9 +226,10 @@
     height: 18px;
     padding: 0 3px;
     border-radius: 9px;
-    background: var(--cms-row-hover);
-    color: var(--cms-accent);
+    background: color-mix(in srgb, #c77a15 16%, var(--cms-surface));
+    color: #925400;
     font-size: 10px;
+    font-weight: 700;
 
   }
   ._calendar-entries { display: none; }

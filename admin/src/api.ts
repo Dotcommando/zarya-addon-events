@@ -1,6 +1,6 @@
 import type { IAddonAdminHost } from '@zarya/addon-contracts/addons';
 
-import type { IUtcPattern } from './calendar';
+import type { IUtcPattern } from './calendar.js';
 
 export interface IEvent {
   readonly sessionId: string;
@@ -15,6 +15,10 @@ export interface IEvent {
   readonly heldPlaces: number;
   readonly confirmedPlaces: number;
   readonly availablePlaces: number;
+}
+
+export interface ICalendarEvent extends IEvent {
+  readonly pendingRequestCount: number;
 }
 
 export interface IRequest {
@@ -68,6 +72,10 @@ export function event(value: unknown): IEvent {
     confirmedPlaces: count(row.confirmedPlaces),
     availablePlaces: count(row.availablePlaces),
   };
+}
+
+export function calendarEvent(value: unknown): ICalendarEvent {
+  return { ...event(value), pendingRequestCount: count(record(value).pendingRequestCount) };
 }
 
 export function requestRow(value: unknown): IRequest {
@@ -146,8 +154,8 @@ export function series(value: unknown): ISeries {
 }
 
 export async function allEvents(host: IAddonAdminHost, rangeStart: string, rangeEnd: string,
-  pageId?: string): Promise<readonly IEvent[]> {
-  const result: IEvent[] = [];
+  pageId?: string): Promise<readonly ICalendarEvent[]> {
+  const result: ICalendarEvent[] = [];
   const seen = new Set<string>();
   let cursor: string | null = null;
 
@@ -159,8 +167,8 @@ export async function allEvents(host: IAddonAdminHost, rangeStart: string, range
       ...(pageId ? { pageId } : {}),
       ...(cursor ? { cursor } : {}),
     });
-    const batch: { items: readonly IEvent[];
-      nextCursor: string | null } = page(await host.request('/sessions?' + query), event);
+    const batch: { items: readonly ICalendarEvent[];
+      nextCursor: string | null } = page(await host.request('/sessions?' + query), calendarEvent);
 
     result.push(...batch.items);
     cursor = batch.nextCursor;

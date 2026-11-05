@@ -95,3 +95,16 @@ exposed. Calendar/day/occurrence/schedule/settings use validated query state und
 the registered add-on route. Requests are paged explicitly, and calendar event
 pages are fully consumed before showing a complete grid. Old data and uncertain
 mutations are never silently retried or replaced with empty success screens.
+
+## CMS sessions query and calendar counters
+
+Events 0.4.2 supplies eventsCmsExtension(listBookableSessions). The host registers
+the returned descriptor as cms.extensions.events.sessions.list. Its public query
+uses the existing cursor contract, accepts ISO range instants and returns JSON
+instants, with host-owned site identity. It exposes no request/contact data.
+
+ListAdminSessions returns IAdminSessionSummary with pendingRequestCount. The
+IPendingRequestCountsPort batches the current page's session identities. MongoDB
+counts Pending request documents by site/session, without summing places. The
+calendar aggregates these numbers in the configured site zone and hides zero.
+See ADR 0005 for access, consistency and packaging boundaries.
