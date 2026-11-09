@@ -49,8 +49,12 @@ export class ListSessionRequestsUseCase implements IListSessionRequests {
       const incorrectOrder = previous && (previous.requestedAt > state.requestedAt
         || previous.requestedAt.getTime() === state.requestedAt.getTime() && previous.requestId >= state.requestId);
 
-      if (state.sessionId !== input.sessionId || query.state !== null && state.state !== query.state
-        || incorrectOrder) {
+      if (
+        state.sessionId !== input.sessionId
+        || query.state !== null
+        && state.state !== query.state
+        || incorrectOrder
+      ) {
         throw new BusinessError(BusinessErrorCode.Scope, 'Inconsistent request list');
       }
       previous = state;

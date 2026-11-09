@@ -98,23 +98,34 @@ export function operationRecord(receipt: OperationReceipt): IParticipationOperat
 export function operationReceipt(row: IParticipationOperationRecord, identity: IOperationIdentity): OperationReceipt {
   const key = operationKey(identity);
 
-  if (row._id !== key.id || row.keyDigest !== key.keyDigest || row.siteId !== identity.siteId
-    || row.actorId !== identity.actorId || row.operation !== identity.operation) {
+  if (
+    row._id !== key.id
+    || row.keyDigest !== key.keyDigest
+    || row.siteId !== identity.siteId
+    || row.actorId !== identity.actorId
+    || row.operation !== identity.operation
+  ) {
     throw new BusinessError(BusinessErrorCode.Scope, 'Foreign participation operation');
   }
 
   const common = { inputIdentity: row.inputIdentity };
 
-  if (row.operation === ParticipationOperation.Request && row.actorId === null
-    && row.result.state === ParticipationState.Pending) {
+  if (
+    row.operation === ParticipationOperation.Request
+    && row.actorId === null
+    && row.result.state === ParticipationState.Pending
+  ) {
     return {
       ...common,
       identity: { ...identity, operation: ParticipationOperation.Request, actorId: null },
       result: structuredClone(row.result),
     };
   }
-  if (row.operation === ParticipationOperation.Confirm && row.actorId !== null
-    && row.result.state === ParticipationState.Confirmed) {
+  if (
+    row.operation === ParticipationOperation.Confirm
+    && row.actorId !== null
+    && row.result.state === ParticipationState.Confirmed
+  ) {
     return {
       ...common,
       identity: {
@@ -125,8 +136,11 @@ export function operationReceipt(row: IParticipationOperationRecord, identity: I
       result: structuredClone(row.result),
     };
   }
-  if (row.operation === ParticipationOperation.Decline && row.actorId !== null
-    && row.result.state === ParticipationState.Declined) {
+  if (
+    row.operation === ParticipationOperation.Decline
+    && row.actorId !== null
+    && row.result.state === ParticipationState.Declined
+  ) {
     return {
       ...common,
       identity: {

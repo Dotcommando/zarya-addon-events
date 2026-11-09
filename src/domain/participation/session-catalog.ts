@@ -100,8 +100,13 @@ export function validateSessionPage(page: ICursorPage<ISessionState>, query: ISe
   let previous: ISessionState | undefined;
 
   for (const item of page.items) {
-    if (!matchesSessionQuery(item, query) || previous && (previous.startsAt > item.startsAt
-      || previous.startsAt.getTime() === item.startsAt.getTime() && previous.sessionId >= item.sessionId)) {
+    if (
+      !matchesSessionQuery(item, query)
+      || previous
+      && (previous.startsAt > item.startsAt
+      || previous.startsAt.getTime() === item.startsAt.getTime()
+      && previous.sessionId >= item.sessionId)
+    ) {
       throw new BusinessError(BusinessErrorCode.Scope, 'Inconsistent session page');
     }
     previous = item;

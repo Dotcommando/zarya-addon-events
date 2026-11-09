@@ -59,8 +59,10 @@ export class SessionHorizonService {
           }, series.version,
           sessions.map((session) => ({ session, expectedVersion: null })), addonPermit);
         } catch (error) {
-          if (!(error instanceof BusinessError)
-            || ![BusinessErrorCode.StaleWrite, BusinessErrorCode.AddonDisabled].includes(error.code)) {
+          if (
+            !(error instanceof BusinessError)
+            || ![BusinessErrorCode.StaleWrite, BusinessErrorCode.AddonDisabled].includes(error.code)
+          ) {
             throw error;
           }
         }

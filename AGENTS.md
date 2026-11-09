@@ -62,6 +62,11 @@ The root eslint.config.mjs is copied from CMS Zarya and governs JS, TS and Svelt
 Preserve its rule options. Do not add another TypeScript formatter or nested configs.
 Run npm run format, resolve remaining diagnostics manually, then npm run lint.
 Multiline object literals have one property per line with a trailing comma.
+For multiline if conditions, put the first condition after a newline following
+`if (`, put every top-level logical clause on a separate line with the operator
+at the beginning, and put the outer closing `)` on its own line before `{`.
+Preserve explicit grouping, comments and compact single-line conditions. Enforce
+this with the root ESLint rule and its autofix.
 
 Administration sources belong in admin/src; they are shipped as Svelte components
 for the host's Svelte/Vite build. Public chunks, browser TS and data-only Snippet
@@ -81,6 +86,17 @@ from existing contracts. Work in reviewable increments without plan/status files
 Implement one observable use case at a time: failing fake-port unit test, application
 behavior, inbound composition, failing adapter test, real adapter and focused
 integration coverage. Do not claim unexecuted Red/Green or database guarantees.
+
+Review every new feature for rejected Promise paths before considering it complete.
+Rejection is a normal failure outcome; unhandled or temporarily unobserved rejection
+is a defect. Trace ownership and observation of every asynchronous task, including
+cancellation before admission and during execution, timeouts, losing Promise.race
+branches, parallel siblings after an early failure, timers/event callbacks,
+cleanup/finally chains and intentionally detached work. Attach rejection handling
+when work is created, propagate failures through the agreed operation boundary,
+and release resources on every exit. Cover relevant failure/cancellation races
+with deterministic focused tests that fail on unhandled rejections. Do not hide
+such failures with a global unhandledRejection handler or an empty catch.
 
 Run only explicitly selected affected tests, not the entire suite unless requested.
 Keep relevant architecture, typecheck, lint and build checks. Integration tests use

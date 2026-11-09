@@ -7,7 +7,7 @@ export const eventsDefinition: IAddonDefinition = {
   name: { en: 'Events', ru: 'События' },
   description: { en: 'Recurring events and participation requests', ru: 'Циклические события и заявки участников' },
   contractVersion: 1,
-  implementationVersion: '0.4.2',
+  implementationVersion: '0.4.3',
   configurationSchemaVersion: 1,
   adminComponentId: 'events',
   snippetIds: ['ParticipationForm'],
@@ -16,10 +16,16 @@ export const eventsDefinition: IAddonDefinition = {
 export function validateEventsConfiguration(configuration: IAddonConfiguration): void {
   const labels = configuration.values.adminMenuLabels;
 
-  if (configuration.schemaVersion !== 1 || Object.keys(configuration.values).some((key) => key !== 'adminMenuLabels')
-    || labels !== undefined && (!labels || typeof labels !== 'object' || Array.isArray(labels)
+  if (
+    configuration.schemaVersion !== 1
+    || Object.keys(configuration.values).some((key) => key !== 'adminMenuLabels')
+    || labels !== undefined
+    && (!labels
+    || typeof labels !== 'object'
+    || Array.isArray(labels)
       || Object.entries(labels).some(([language, value]) => !['en', 'ru'].includes(language)
-        || typeof value !== 'string' || value.length > 80))) {
+        || typeof value !== 'string' || value.length > 80))
+  ) {
     throw new BusinessError(BusinessErrorCode.Validation, 'Invalid events configuration');
   }
 }

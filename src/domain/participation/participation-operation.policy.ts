@@ -9,8 +9,12 @@ export function requireParticipationKey(key: string): void {
 
 export function requireMatchingReceipt(receipt: OperationReceipt, identity: IOperationIdentity,
   inputIdentity: string): void {
-  if (receipt.identity.siteId !== identity.siteId || receipt.identity.operation !== identity.operation
-    || receipt.identity.actorId !== identity.actorId || receipt.identity.idempotencyKey !== identity.idempotencyKey) {
+  if (
+    receipt.identity.siteId !== identity.siteId
+    || receipt.identity.operation !== identity.operation
+    || receipt.identity.actorId !== identity.actorId
+    || receipt.identity.idempotencyKey !== identity.idempotencyKey
+  ) {
     throw new BusinessError(BusinessErrorCode.Scope, 'Foreign participation receipt');
   }
   if (receipt.inputIdentity !== inputIdentity) {

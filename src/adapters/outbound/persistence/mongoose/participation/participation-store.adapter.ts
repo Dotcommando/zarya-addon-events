@@ -34,9 +34,17 @@ function decodeCursor(encoded: string, query: IRequestListQuery): {
 
     const value: unknown = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'));
 
-    if (!value || typeof value !== 'object' || !('scope' in value) || value.scope !== queryScope(query)
-      || !('requestedAt' in value) || typeof value.requestedAt !== 'string'
-      || !('requestId' in value) || typeof value.requestId !== 'string' || !value.requestId) {
+    if (
+      !value
+      || typeof value !== 'object'
+      || !('scope' in value)
+      || value.scope !== queryScope(query)
+      || !('requestedAt' in value)
+      || typeof value.requestedAt !== 'string'
+      || !('requestId' in value)
+      || typeof value.requestId !== 'string'
+      || !value.requestId
+    ) {
       throw new Error();
     }
 
@@ -125,10 +133,13 @@ export class MongooseParticipationStore implements IParticipationStorePort {
       const request = new BookingRequest(change.request).toState();
       const calculated = ParticipationPolicy.reserve(sessionState(row), request, change.session.version);
 
-      if (!isDeepStrictEqual(calculated, { session: change.session, request: change.request })
-        || change.receipt.result.sessionId !== request.sessionId || change.receipt.result.places !== request.places
+      if (
+        !isDeepStrictEqual(calculated, { session: change.session, request: change.request })
+        || change.receipt.result.sessionId !== request.sessionId
+        || change.receipt.result.places !== request.places
         || change.receipt.result.requestReference !== request.requestReference
-        || change.receipt.result.acceptedAt.getTime() !== request.requestedAt.getTime()) {
+        || change.receipt.result.acceptedAt.getTime() !== request.requestedAt.getTime()
+      ) {
         throw new BusinessError(BusinessErrorCode.Scope, 'Inconsistent participation commit');
       }
 
@@ -184,11 +195,13 @@ export class MongooseParticipationStore implements IParticipationStorePort {
           sessionVersion: change.session.version,
         });
 
-      if (!isDeepStrictEqual(calculated, { session: change.session, request: change.request })
+      if (
+        !isDeepStrictEqual(calculated, { session: change.session, request: change.request })
         || change.receipt.result.requestId !== change.request.requestId
         || change.receipt.result.requestVersion !== change.request.version
         || change.receipt.result.sessionId !== change.session.sessionId
-          || change.receipt.result.places !== change.request.places) {
+          || change.receipt.result.places !== change.request.places
+      ) {
         throw new BusinessError(BusinessErrorCode.Scope, 'Inconsistent decision commit');
       }
 
@@ -224,8 +237,11 @@ export class MongooseParticipationStore implements IParticipationStorePort {
   }
 
   private requireCommitScope(change: ICommitParticipationRequest | ICommitParticipationDecision): void {
-    if (change.receipt.identity.siteId !== change.session.siteId || change.request.siteId !== change.session.siteId
-      || change.request.sessionId !== change.session.sessionId) {
+    if (
+      change.receipt.identity.siteId !== change.session.siteId
+      || change.request.siteId !== change.session.siteId
+      || change.request.sessionId !== change.session.sessionId
+    ) {
       throw new BusinessError(BusinessErrorCode.Scope, 'Foreign participation commit');
     }
   }

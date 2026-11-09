@@ -17,9 +17,14 @@ function record(value: unknown): Record<string, unknown> {
 function session(value: unknown): IPublicSession {
   const row = record(value);
 
-  if (typeof row.sessionId !== 'string' || typeof row.startsAt !== 'string'
-    || !Number.isFinite(Date.parse(row.startsAt)) || typeof row.timeZone !== 'string'
-    || typeof row.availablePlaces !== 'number' || typeof row.bookable !== 'boolean') {
+  if (
+    typeof row.sessionId !== 'string'
+    || typeof row.startsAt !== 'string'
+    || !Number.isFinite(Date.parse(row.startsAt))
+    || typeof row.timeZone !== 'string'
+    || typeof row.availablePlaces !== 'number'
+    || typeof row.bookable !== 'boolean'
+  ) {
     throw new Error('Invalid session');
   }
 

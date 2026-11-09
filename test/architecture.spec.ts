@@ -19,8 +19,12 @@ it('keeps application/domain/ports inward and imports only versioned host contra
     const layer = path.relative(root, filename).split(path.sep)[0];
     const tree = ts.createSourceFile(filename, readFileSync(filename, 'utf8'), ts.ScriptTarget.Latest, true);
     const inspect = (node: ts.Node): void => {
-      if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier
-        && ts.isStringLiteral(node.moduleSpecifier)) {
+      if (
+        (ts.isImportDeclaration(node)
+        || ts.isExportDeclaration(node))
+        && node.moduleSpecifier
+        && ts.isStringLiteral(node.moduleSpecifier)
+      ) {
         const specifier = node.moduleSpecifier.text;
 
         expect(specifier, filename).not.toMatch(/cms-zarya|\.\.\/\.\.\/\.\.\/\.\.\/\.\.\/\.\.\//);

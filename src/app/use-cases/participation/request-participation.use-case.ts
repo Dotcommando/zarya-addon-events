@@ -119,8 +119,12 @@ export class RequestParticipationUseCase implements IRequestParticipation {
     input: IRequestParticipationInput): IParticipationReceipt {
     requireMatchingReceipt(receipt, identity, fingerprint);
 
-    if (receipt.result.state !== ParticipationState.Pending || !('acceptedAt' in receipt.result)
-      || receipt.result.sessionId !== input.sessionId || receipt.result.places !== input.places) {
+    if (
+      receipt.result.state !== ParticipationState.Pending
+      || !('acceptedAt' in receipt.result)
+      || receipt.result.sessionId !== input.sessionId
+      || receipt.result.places !== input.places
+    ) {
       throw new BusinessError(BusinessErrorCode.Scope, 'Inconsistent request receipt');
     }
     requireInstant(receipt.result.acceptedAt, 'acceptedAt');

@@ -13,8 +13,14 @@ export function requestList(value: unknown): { items: { requestId: string; versi
 
   return {
     items: value.items.map((item: unknown) => {
-      if (!item || typeof item !== 'object' || !('requestId' in item) || typeof item.requestId !== 'string'
-      || !('version' in item) || typeof item.version !== 'string') {
+      if (
+        !item
+        || typeof item !== 'object'
+        || !('requestId' in item)
+        || typeof item.requestId !== 'string'
+      || !('version' in item)
+        || typeof item.version !== 'string'
+      ) {
         throw new Error('Invalid request response');
       }
 

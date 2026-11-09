@@ -1,10 +1,10 @@
 # Zarya Events
 
 Optional recurring events and participation requests for CMS Zarya. This is a
-library installed as @zarya/events@0.4.2 in the shared backend and admin
+library installed as @zarya/events@0.4.3 in the shared backend and admin
 build, not a separate application. Game content remains ordinary CMS pages.
 
-Requires CMS Zarya 0.9.2 or later, declared as the minimum `zarya.cmsVersion` in package.json.
+Requires CMS Zarya 0.11.0 or later, declared as the minimum `zarya.cmsVersion` in package.json.
 The SDK peer version is independent of the CMS version. This metadata records
 compatibility; it does not itself enforce a host-version check at runtime.
 
@@ -34,6 +34,14 @@ to administrative session summaries. Calendar day badges show Pending request
 counts in the warning palette; zero badges are hidden. Package and runtime
 implementation versions are both 0.4.2. CMS 0.9.2 is the minimum host version;
 configuration, schemas and Events hook identities are unchanged.
+
+Package 0.4.3 adds `cms.extensions.events.sessions.listForPages` with a separate
+limit and cursor for every page. It authorizes once, checks all pages against one
+current publication and combines the Events reads without accessing CMS storage.
+The old single-page API remains available. Up to 64 pages can be queried per call;
+per-page limits remain 1..100, default 20. See [ADR 0006](docs/adr/0006-public-session-page-batches.md).
+Schemas, data, hooks and installation secrets are unchanged. The minimum CMS is
+0.11.0; the SDK remains 0.4.0.
 
 ## Development
 

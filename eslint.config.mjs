@@ -13,6 +13,78 @@ const __filename = fileURLToPath(import.meta.url);
 
 const __dirname = path.dirname(__filename);
 
+const multilineIfConditionRule = {
+  meta: {
+    type: 'layout',
+    docs: { description: 'Keep multiline if clauses and outer parentheses on separate lines.' },
+    fixable: 'whitespace',
+    schema: [],
+    messages: { layout: 'Put multiline if clauses and the closing parenthesis on separate lines.' },
+  },
+  create(context) {
+    const source = context.sourceCode;
+
+    return {
+      IfStatement(node) {
+        const open = source.getTokenAfter(source.getFirstToken(node));
+        const close = source.getTokenBefore(node.consequent);
+
+        if (open.loc.start.line === close.loc.end.line) {
+          return;
+        }
+
+        const newline = source.text.includes('\r\n') ? '\r\n' : '\n';
+        const indent = source.lines[node.loc.start.line - 1].match(/^\s*/)[0];
+        const edits = [];
+        const breakBefore = (token, indentation) => {
+          const before = source.getTokenBefore(token, { includeComments: true });
+
+          if (before.loc.end.line === token.loc.start.line) {
+            edits.push({ range: [before.range[1], token.range[0]], text: newline + indentation });
+          }
+        };
+        const first = source.getTokenAfter(open, { includeComments: true });
+
+        breakBefore(first, indent + '  ');
+        breakBefore(close, indent);
+        const visit = (expression) => {
+          if (expression.type !== 'LogicalExpression') {
+            return;
+          }
+          visit(expression.left);
+          const operator = source.getTokenAfter(expression.left, (token) => token.value === expression.operator);
+          const after = source.getTokenAfter(operator, { includeComments: true });          // Let operator-linebreak move an operator past a trailing line comment first.
+          const trailingComments = source.getTokensBetween(operator, source.getFirstToken(expression.right), {
+            includeComments: true,
+          });
+
+          if (trailingComments.some((token) => token.type === 'Line')) {
+            visit(expression.right);
+
+            return;
+          }
+          breakBefore(operator, indent + '  ');
+
+          if (operator.loc.end.line !== after.loc.start.line) {
+            edits.push({ range: [operator.range[1], after.range[0]], text: ' ' });
+          }
+          visit(expression.right);
+        };
+
+        visit(node.test);
+
+        if (edits.length) {
+          context.report({
+            node: node.test,
+            messageId: 'layout',
+            fix: (fixer) => edits.map((edit) => fixer.replaceTextRange(edit.range, edit.text)),
+          });
+        }
+      },
+    };
+  },
+};
+
 export default [
   {
     ignores: [
@@ -36,8 +108,13 @@ export default [
   js.configs.recommended,
   {
     files: ['**/*.{ts,mts,cts,js,mjs,cjs,svelte}'],
-    plugins: { '@stylistic': stylistic, 'simple-import-sort': simpleImportSort },
+    plugins: {
+      '@stylistic': stylistic,
+      'simple-import-sort': simpleImportSort,
+      zarya: { rules: { 'multiline-if-condition': multilineIfConditionRule } },
+    },
     rules: {
+      'zarya/multiline-if-condition': 'error',
       'padding-line-between-statements': 'off',
       '@stylistic/padding-line-between-statements': [
         'error',

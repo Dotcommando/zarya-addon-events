@@ -3,14 +3,18 @@ import { createHash } from 'node:crypto';
 import type { IAddonOperationPermit } from '@zarya/addon-contracts/addons';
 import { BusinessError, BusinessErrorCode } from '@zarya/addon-contracts/business-error';
 import type { ICursorPage } from '@zarya/addon-contracts/cursor-page';
-import type { Connection, Model } from 'mongoose';
+import type { Connection, Model, PipelineStage } from 'mongoose';
 
 import type { IHookCommitIntent } from '../../../../../domain/hooks/hook-change.js';
 import { type ISessionState, SessionStatus } from '../../../../../domain/participation/session.js';
 import {
   type ISessionCatalogQuery, SessionAvailabilityFilter,
-  SessionStatusFilter, SessionTimeFilter, validateSessionQuery,
+  SessionStatusFilter, SessionTimeFilter, validateSessionPage, validateSessionQuery,
 } from '../../../../../domain/participation/session-catalog.js';
+import {
+  type ISessionPageGroup, validateSessionBatch,
+} from '../../../../../domain/participation/session-page-batch.js';
+import type { ISessionBatchReadPort } from '../../../../../ports/outbound/participation/session-batch-read.port.js';
 import type { ISessionStorePort } from '../../../../../ports/outbound/participation/session-store.port.js';
 import { guardedWrite, type IAddonWriteFence } from './addon-write-fence.js';
 import type { IHookTransactionRecorder } from './hook-recorder.js';
@@ -38,9 +42,17 @@ function cursor(encoded: string, query: ISessionCatalogQuery): ISessionCursor {
 
     const value: unknown = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'));
 
-    if (value === null || typeof value !== 'object' || !('scope' in value) || value.scope !== scope(query)
-      || !('startsAt' in value) || typeof value.startsAt !== 'string'
-      || !('sessionId' in value) || typeof value.sessionId !== 'string' || !value.sessionId) {
+    if (
+      value === null
+      || typeof value !== 'object'
+      || !('scope' in value)
+      || value.scope !== scope(query)
+      || !('startsAt' in value)
+      || typeof value.startsAt !== 'string'
+      || !('sessionId' in value)
+      || typeof value.sessionId !== 'string'
+      || !value.sessionId
+    ) {
       throw new Error();
     }
 
@@ -56,7 +68,51 @@ function cursor(encoded: string, query: ISessionCatalogQuery): ISessionCursor {
   }
 }
 
-export class MongooseSessionCatalogStore implements ISessionStorePort {
+function sessionFilter(query: ISessionCatalogQuery): PipelineStage.Match['$match'] {
+  validateSessionQuery(query);
+  const after = query.cursor === null ? null : cursor(query.cursor, query);
+
+  return {
+    siteId: query.siteId,
+    ...(query.pageId === null ? {} : { pageId: query.pageId }),
+    startsAt: { $lt: query.rangeEnd },
+    endsAt: { $gt: query.rangeStart },
+    ...(query.status === SessionStatusFilter.All ? {} : {
+      status: query.status === SessionStatusFilter.Scheduled ? SessionStatus.Scheduled : SessionStatus.Cancelled,
+    }),
+    $and: [
+      ...(query.time === SessionTimeFilter.All ? [] : [{
+        startsAt: query.time === SessionTimeFilter.Future ? { $gt: query.at } : { $lte: query.at },
+      }]),
+      ...(after ? [{
+        $or: [{ startsAt: { $gt: after.startsAt } }, { startsAt: after.startsAt, _id: { $gt: after.sessionId } }],
+      }] : []),
+      {
+        $expr: query.availability === SessionAvailabilityFilter.All ? { $literal: true } : {
+          [query.availability === SessionAvailabilityFilter.Available ? '$gt' : '$eq']:
+            [{ $subtract: ['$capacity', { $add: ['$heldPlaces', '$confirmedPlaces'] }] }, 0],
+        },
+      },
+    ],
+  };
+}
+
+function sessionPage(query: ISessionCatalogQuery, rows: readonly ISessionRecord[]): ICursorPage<ISessionState> {
+  const states = rows.map(sessionState);
+
+  validateSessionPage({ items: states, nextCursor: null }, { ...query, limit: query.limit + 1 });
+  const items = states.slice(0, query.limit);
+  const last = items.at(-1);
+
+  return {
+    items,
+    nextCursor: states.length > query.limit && last ? Buffer.from(JSON.stringify({
+      scope: scope(query), startsAt: last.startsAt.toISOString(), sessionId: last.sessionId,
+    })).toString('base64url') : null,
+  };
+}
+
+export class MongooseSessionCatalogStore implements ISessionStorePort, ISessionBatchReadPort {
   readonly sessions: Model<ISessionRecord>;
 
   constructor(private readonly connection: Connection,
@@ -85,43 +141,49 @@ export class MongooseSessionCatalogStore implements ISessionStorePort {
   }
 
   async list(query: ISessionCatalogQuery): Promise<ICursorPage<ISessionState>> {
-    validateSessionQuery(query);
-    const after = query.cursor === null ? null : cursor(query.cursor, query);
-    const rows = await this.sessions.find({
-      siteId: query.siteId,
-      ...(query.pageId === null ? {} : { pageId: query.pageId }),
-      startsAt: { $lt: query.rangeEnd },
-      endsAt: { $gt: query.rangeStart },
-      ...(query.status === SessionStatusFilter.All ? {} : {
-        status: query.status === SessionStatusFilter.Scheduled ? SessionStatus.Scheduled : SessionStatus.Cancelled,
-      }),
-      $and: [
-        ...(query.time === SessionTimeFilter.All ? [] : [{
-          startsAt: query.time === SessionTimeFilter.Future
-            ? { $gt: query.at } : { $lte: query.at },
-        }]),
-        ...(after ? [{
-          $or: [{ startsAt: { $gt: after.startsAt } },
-            { startsAt: after.startsAt, _id: { $gt: after.sessionId } }],
-        }] : []),
-        {
-          $expr: query.availability === SessionAvailabilityFilter.All ? { $literal: true }
-            : {
-              [query.availability === SessionAvailabilityFilter.Available ? '$gt' : '$eq']:
-            [{ $subtract: ['$capacity', { $add: ['$heldPlaces', '$confirmedPlaces'] }] }, 0],
-            },
-        },
-      ],
-    }).sort({ startsAt: 1, _id: 1 }).limit(query.limit + 1).lean().exec();
-    const items = rows.slice(0, query.limit).map(sessionState);
-    const last = items.at(-1);
+    const rows = await this.sessions.find(sessionFilter(query))
+      .sort({ startsAt: 1, _id: 1 }).limit(query.limit + 1).lean().exec();
 
-    return {
-      items,
-      nextCursor: rows.length > query.limit && last ? Buffer.from(JSON.stringify({
-        scope: scope(query), startsAt: last.startsAt.toISOString(), sessionId: last.sessionId,
-      })).toString('base64url') : null,
-    };
+    return sessionPage(query, rows);
+  }
+
+  async listForPages(queries: readonly ISessionCatalogQuery[]): Promise<readonly ISessionPageGroup[]> {
+    validateSessionBatch(queries);
+
+    if (!queries.length) {
+      return [];
+    }
+
+    const branches = queries.map((query): (PipelineStage.Match | PipelineStage.Sort | PipelineStage.Limit)[] => [
+      { $match: sessionFilter(query) },
+      { $sort: { startsAt: 1, _id: 1 } },
+      { $limit: query.limit + 1 },
+    ]);
+    const pipeline: PipelineStage[] = [
+      ...branches[0]!,
+      ...branches.slice(1).map((branch): PipelineStage => ({
+        $unionWith: { coll: this.sessions.collection.name, pipeline: branch },
+      })),
+    ];
+    const rows = await this.sessions.aggregate<ISessionRecord>(pipeline).option({ maxTimeMS: 10000 }).exec();
+    const grouped = new Map<string, ISessionRecord[]>(queries.map((query) => [query.pageId!, []]));
+
+    for (const row of rows) {
+      const group = grouped.get(row.pageId);
+
+      if (!group || row.siteId !== queries[0]!.siteId) {
+        throw new BusinessError(BusinessErrorCode.Scope, 'Foreign session batch result');
+      }
+      group.push(row);
+    }
+
+    return queries.map((query) => {
+      const pageId = query.pageId!;
+      const selected = grouped.get(pageId)!.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime()
+        || (a._id < b._id ? -1 : a._id > b._id ? 1 : 0));
+
+      return { pageId, ...sessionPage(query, selected) };
+    });
   }
 
   async cancel(state: ISessionState,

@@ -69,8 +69,10 @@ export function participationFixture(): IParticipationFixture {
       if (receipts.has(key(change.receipt.identity))) {
         throw new BusinessError(BusinessErrorCode.Conflict, 'Duplicate operation');
       }
-      if (sessions.states.get(change.session.sessionId)?.version !== change.expectedSessionVersion
-        || requests.get(change.request.requestId)?.version !== change.expectedRequestVersion) {
+      if (
+        sessions.states.get(change.session.sessionId)?.version !== change.expectedSessionVersion
+        || requests.get(change.request.requestId)?.version !== change.expectedRequestVersion
+      ) {
         throw new BusinessError(BusinessErrorCode.StaleWrite, 'Decision changed');
       }
       sessions.states.set(change.session.sessionId, structuredClone(change.session));
